@@ -1,0 +1,143 @@
+# Statistical Arbitrage Strategy Configuration
+
+# Data Parameters
+data:
+  universe:
+    - SPY  # S&P 500 ETF
+    - IWM  # Russell 2000 ETF
+    - QQQ  # Nasdaq 100 ETF
+    - DIA  # Dow Jones ETF
+    - XLF  # Financial Sector ETF
+    - XLE  # Energy Sector ETF
+    - XLK  # Technology Sector ETF
+    - XLV  # Healthcare Sector ETF
+  start_date: "2015-01-01"
+  end_date: "2023-12-31"
+  train_test_split: 0.7  # 70% training, 30% testing
+  min_observations: 252  # Minimum 1 year of data
+
+# Stationarity Tests
+stationarity:
+  adf_max_lag: 20
+  adf_regression: "c"  # constant only
+  kpss_regression: "c"
+  kpss_nlags: "auto"
+  significance_level: 0.05
+
+# Cointegration Tests
+cointegration:
+  method: "johansen"  # "engle_granger" or "johansen"
+  
+  # Engle-Granger parameters
+  engle_granger:
+    max_lag: 20
+    regression: "c"
+  
+  # Johansen parameters
+  johansen:
+    det_order: 0  # -1: no deterministic terms, 0: constant, 1: constant + trend
+    k_ar_diff: 1  # VAR lag order
+    significance_level: 0.05
+  
+  # Pair selection criteria
+  selection:
+    min_test_statistic: 15.0  # Minimum Johansen trace statistic
+    max_half_life: 60  # Maximum mean-reversion half-life in days
+    min_half_life: 5   # Minimum half-life to avoid noise
+    min_correlation: 0.7  # Minimum price correlation
+
+# Kalman Filter Parameters
+kalman:
+  transition_covariance: 1e-5  # Process noise for hedge ratio evolution
+  observation_covariance: 1e-3  # Measurement noise
+  initial_state_mean: 1.0      # Initial hedge ratio estimate
+  initial_state_covariance: 1.0
+  em_iterations: 0  # Expectation-Maximization iterations for parameter tuning (disabled due to Python 3.11 compatibility)
+
+# Spread Metrics
+spread:
+  lookback_window: 60  # Rolling window for z-score calculation
+  half_life_method: "ou"  # "ou" or "ar1"
+  min_observations: 30  # Minimum observations for metrics
+
+# Signal Generation
+signals:
+  entry_threshold: 2.0    # Z-score threshold for entry
+  exit_threshold: 0.5     # Z-score threshold for exit
+  stop_loss_threshold: 3.5  # Z-score stop-loss
+  
+  # Volatility filter
+  volatility_filter:
+    enabled: true
+    lookback: 20
+    max_percentile: 90  # Don't trade if volatility > 90th percentile
+  
+  # Minimum holding period
+  min_holding_period: 1  # Days
+  
+  # Maximum holding period
+  max_holding_period: 60  # Days
+
+# Position Sizing (UPGRADED)
+position_sizing:
+  method: "volatility_target"  # "equal_weight" or "volatility_target"
+  volatility_target: 0.10  # 10% annualized volatility target
+  max_leverage: 2.0
+  max_position_size: 0.2  # Maximum 20% of capital per pair
+
+# Portfolio Management (CONSERVATIVE - AS DESIGNED)
+portfolio:
+  enabled: true
+  target_volatility: 0.10  # 10% annualized portfolio volatility
+  max_pairs: 5  # Maximum concurrent positions
+  max_pair_weight: 0.30  # Maximum 30% capital per pair
+  vol_lookback: 60  # Lookback for volatility estimation
+  
+  # Regime Filters
+  regime_filters: true
+  vol_explosion_threshold: 3.0  # Flag if vol > 3x historical
+  min_half_life: 5  # Minimum mean-reversion half-life (days)
+  max_half_life: 60  # Maximum half-life (too slow)
+  
+  # Capital Efficiency
+  capital_recycling: true  # Reuse capital from closed positions
+  min_position_size: 1000  # Minimum $1000 position
+
+# Execution
+execution:
+  transaction_cost: 0.0010  # 10 bps per trade
+  slippage: 0.0005  # 5 bps slippage
+  market_impact: 0.0002  # 2 bps market impact
+  
+# Risk Management
+risk:
+  max_drawdown_limit: 0.20  # Stop trading if drawdown exceeds 20%
+  max_positions: 5  # Maximum concurrent positions
+  correlation_limit: 0.7  # Maximum correlation between active pairs
+  
+# Backtesting
+backtest:
+  initial_capital: 1000000  # $1M starting capital
+  rebalance_frequency: "daily"
+  compound_returns: true
+  
+# Performance Metrics
+performance:
+  risk_free_rate: 0.02  # 2% annual risk-free rate
+  trading_days_per_year: 252
+  
+# Sensitivity Analysis
+sensitivity:
+  parameters:
+    - entry_threshold: [1.5, 2.0, 2.5, 3.0]
+    - exit_threshold: [0.0, 0.5, 1.0]
+    - lookback_window: [30, 60, 90, 120]
+    - transaction_cost: [0.0005, 0.0010, 0.0015, 0.0020]
+  
+# Output Settings
+output:
+  save_signals: true
+  save_diagnostics: true
+  save_plots: true
+  plot_format: "png"
+  plot_dpi: 300

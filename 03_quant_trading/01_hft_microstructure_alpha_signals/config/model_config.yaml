@@ -1,0 +1,45 @@
+# Model training configuration
+
+models:
+  # Baseline logistic regression
+  logistic:
+    enabled: true
+    C: 1.0
+    max_iter: 1000
+    class_weight: "balanced"
+    
+  # XGBoost classifier
+  xgboost:
+    enabled: true
+    n_estimators: 200
+    max_depth: 5
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 5
+    gamma: 0.1
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+    scale_pos_weight: 1.0
+    
+  # Random Forest (alternative)
+  random_forest:
+    enabled: false
+    n_estimators: 200
+    max_depth: 10
+    min_samples_split: 100
+    min_samples_leaf: 50
+    class_weight: "balanced"
+    
+# Training parameters
+training:
+  horizons: [1, 5, 10, 20]  # ticks ahead
+  threshold: 0.5  # classification threshold (ticks)
+  
+  # Evaluation metrics
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - roc_auc

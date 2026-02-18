@@ -1,0 +1,13 @@
+build/
+*.o
+*.a
+*.so
+*.exe
+lob_engine
+lob_benchmark
+.vscode/
+.idea/
+*.swp
+*~
+benchmarks/*.csv
+!benchmarks/sample_results.csv

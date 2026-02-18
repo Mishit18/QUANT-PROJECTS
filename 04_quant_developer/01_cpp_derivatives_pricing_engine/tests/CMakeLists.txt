@@ -1,0 +1,20 @@
+add_executable(test_bs_limit test_bs_limit.cpp)
+target_link_libraries(test_bs_limit heston_engine)
+
+add_executable(test_mc_pde_consistency test_mc_pde_consistency.cpp)
+target_link_libraries(test_mc_pde_consistency heston_engine)
+
+add_executable(test_calibration test_calibration.cpp)
+target_link_libraries(test_calibration heston_engine)
+
+add_executable(test_pde_bs_limit test_pde_bs_limit.cpp)
+target_link_libraries(test_pde_bs_limit heston_engine)
+
+add_executable(test_sobol_convergence test_sobol_convergence.cpp)
+target_link_libraries(test_sobol_convergence heston_engine)
+
+add_test(NAME BSLimit COMMAND test_bs_limit)
+add_test(NAME MCPDEConsistency COMMAND test_mc_pde_consistency)
+add_test(NAME CalibrationSanity COMMAND test_calibration)
+add_test(NAME PDEBSLimit COMMAND test_pde_bs_limit)
+add_test(NAME SobolConvergence COMMAND test_sobol_convergence)

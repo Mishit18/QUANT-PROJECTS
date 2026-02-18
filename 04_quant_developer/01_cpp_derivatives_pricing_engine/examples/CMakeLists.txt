@@ -1,0 +1,2 @@
+add_executable(basic_pricing basic_pricing.cpp)
+target_link_libraries(basic_pricing heston_engine)

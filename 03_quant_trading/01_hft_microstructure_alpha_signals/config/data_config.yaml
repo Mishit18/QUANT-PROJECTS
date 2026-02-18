@@ -1,0 +1,33 @@
+# Data configuration for LOB HFT alpha research
+
+data:
+  # Synthetic data generation parameters
+  n_events: 100000
+  initial_price: 100.0
+  tick_size: 0.01
+  n_levels: 10
+  
+  # LOB dynamics
+  arrival_rate_bid: 50.0  # events per second
+  arrival_rate_ask: 50.0
+  cancel_rate: 30.0
+  trade_rate: 20.0
+  
+  # Size distribution
+  mean_order_size: 100
+  std_order_size: 50
+  min_order_size: 10
+  max_order_size: 1000
+  
+  # Volatility and drift
+  volatility: 0.0002  # per event
+  drift: 0.0
+  
+  # Data paths
+  raw_data_path: "data/raw/lob_data.parquet"
+  processed_data_path: "data/processed/features.parquet"
+  
+  # Train/val/test split
+  train_ratio: 0.6
+  val_ratio: 0.2
+  test_ratio: 0.2

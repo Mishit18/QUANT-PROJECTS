@@ -1,0 +1,35 @@
+# Feature engineering configuration
+
+features:
+  # Order Flow Imbalance
+  ofi:
+    enabled: true
+    n_levels: 5
+    lookback_ticks: [1, 5, 10]
+    
+  # Queue Imbalance
+  queue_imbalance:
+    enabled: true
+    n_levels: [1, 3, 5]
+    
+  # Microprice
+  microprice:
+    enabled: true
+    n_levels: 3
+    
+  # Trade sign and signed volume
+  trade_sign:
+    enabled: true
+    lookback_ticks: [1, 5, 10, 20]
+    
+  # Spread dynamics
+  spread:
+    enabled: true
+    lookback_ticks: [5, 10, 20]
+    
+  # Base features
+  base:
+    enabled: true
+    return_lags: [1, 2, 5, 10]
+    volatility_window: 20
+    depth_levels: 5

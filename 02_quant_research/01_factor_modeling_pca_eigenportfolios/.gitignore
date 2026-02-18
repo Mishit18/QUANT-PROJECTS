@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data files (large)
+data/raw/*.csv
+data/raw/*.parquet
+data/processed/*.parquet
+*.h5
+*.hdf5
+
+# Results (optional - comment out if you want to track)
+# results/*.parquet
+# results/*.csv
+# results/*.json
+
+# Plots (optional - comment out if you want to track)
+# plots/*.png
+# plots/*.pdf
+
+# Logs
+logs/*.log
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+temp/
+tmp/
+
+# Reports (if generated)
+reports/*.pdf
+reports/*.html
+
+# Configuration (if contains sensitive data)
+# config/config.yaml

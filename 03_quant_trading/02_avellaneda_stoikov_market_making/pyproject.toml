@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "auction-theoretic-market-making"
+version = "1.0.0"
+description = "Production-grade Avellaneda-Stoikov market-making framework with HJB optimization"
+authors = ["Elite Quant Research"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.24.0"
+scipy = "^1.10.0"
+pandas = "^2.0.0"
+matplotlib = "^3.7.0"
+seaborn = "^0.12.0"
+pyyaml = "^6.0"
+jupyter = "^1.0.0"
+notebook = "^6.5.0"
+tqdm = "^4.65.0"
+numba = "^0.57.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.3.0"
+black = "^23.3.0"
+flake8 = "^6.0.0"
+mypy = "^1.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

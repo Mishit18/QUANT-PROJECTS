@@ -1,0 +1,73 @@
+# Execution Configuration
+# Configure parent order and strategy parameters
+
+parent_order:
+  quantity: 100000
+  side: BUY  # BUY or SELL
+  urgency: 0.5  # 0.0 = passive, 1.0 = aggressive
+  time_horizon_seconds: 60
+  
+strategy:
+  type: TWAP  # TWAP, VWAP, POV, AGGRESSIVE_LIQUIDITY_SEEKER
+  
+  # TWAP Configuration
+  twap:
+    num_slices: 10
+    slice_interval_seconds: 6
+    aggression: 0.3  # 0.0 = passive limit orders, 1.0 = market orders
+  
+  # VWAP Configuration
+  vwap:
+    num_intervals: 10
+    interval_seconds: 6
+    aggression: 0.4
+    volume_profile:
+      # Historical volume distribution (must sum to 1.0)
+      # U-shaped: higher at open and close
+      - 0.15  # Interval 1
+      - 0.10  # Interval 2
+      - 0.08  # Interval 3
+      - 0.07  # Interval 4
+      - 0.06  # Interval 5
+      - 0.06  # Interval 6
+      - 0.07  # Interval 7
+      - 0.08  # Interval 8
+      - 0.10  # Interval 9
+      - 0.23  # Interval 10
+  
+  # POV Configuration
+  pov:
+    target_participation: 0.10  # 10% of market volume
+    max_participation: 0.30     # Maximum 30%
+    measurement_window_seconds: 10
+    order_interval_seconds: 5
+    aggression: 0.5
+  
+  # Aggressive Liquidity Seeker Configuration
+  aggressive:
+    urgency_threshold: 0.7
+    sweep_percentage: 0.5  # Take 50% of available liquidity
+    order_interval_seconds: 1
+    allow_market_orders: true
+    max_price_levels: 3
+
+# Smart Order Router Configuration
+sor:
+  price_weight: 0.4       # Weight for price quality
+  depth_weight: 0.3       # Weight for depth availability
+  latency_weight: 0.15    # Weight for latency
+  fill_prob_weight: 0.15  # Weight for fill probability
+  min_depth_threshold: 100
+
+# Simulation Configuration
+simulation:
+  step_size_us: 100000  # 100ms time steps
+  market_activity_rate: 2.0  # Poisson rate for background orders
+  enable_market_simulation: true
+  random_seed: 42  # For reproducibility
+
+# Risk Parameters
+risk:
+  max_order_size: 10000
+  max_price_deviation_bps: 50  # Maximum 50 bps from arrival price
+  max_participation_rate: 0.30  # Maximum 30% of market volume

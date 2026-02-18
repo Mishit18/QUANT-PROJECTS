@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+feed_handler
+benchmark
+tests
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Profiling
+perf.data
+perf.data.old
+*.prof
+callgrind.out.*
+massif.out.*
+
+# Core dumps
+core
+core.*

@@ -1,0 +1,2 @@
+add_executable(benchmark_pricing benchmark_pricing.cpp)
+target_link_libraries(benchmark_pricing heston_engine)

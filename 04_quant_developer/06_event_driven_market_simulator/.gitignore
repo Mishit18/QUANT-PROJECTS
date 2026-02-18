@@ -1,0 +1,38 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.out
+*.app
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Results
+results/
+*.csv
+*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (if used for analysis)
+__pycache__/
+*.pyc
+*.pyo
+venv/

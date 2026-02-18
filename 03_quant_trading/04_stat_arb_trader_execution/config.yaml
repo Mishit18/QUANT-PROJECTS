@@ -1,0 +1,83 @@
+# Statistical Arbitrage Configuration
+# Fixed thresholds - no parameter optimization
+
+# Demonstration mode
+demonstration:
+  enabled: true  # Filter for tradable_daily pairs
+  max_pairs_to_show: 3
+  require_tradable_daily: true  # Only pairs with HL 15-45 days
+
+universe:
+  # Sector constituents from financials, technology, energy, consumer
+  # Same-sector stocks share risk factors (stronger mean reversion than ETFs)
+  tickers: [
+    # Financials
+    'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'BLK', 'SCHW', 'USB', 'PNC',
+    # Technology
+    'AAPL', 'MSFT', 'NVDA', 'AVGO', 'ORCL', 'CSCO', 'ADBE', 'CRM', 'INTC', 'AMD',
+    # Energy
+    'XOM', 'CVX', 'COP', 'SLB', 'EOG', 'MPC', 'PSX', 'VLO', 'OXY', 'HAL',
+    # Consumer
+    'AMZN', 'TSLA', 'HD', 'MCD', 'NKE', 'SBUX', 'TGT', 'LOW', 'TJX', 'BKNG'
+  ]
+  start_date: '2020-01-01'
+  end_date: '2023-12-31'
+  
+  # Multi-pair mode
+  max_pairs: 5
+  min_pairs: 1
+
+# Cointegration - strict thresholds
+cointegration:
+  method: 'johansen'
+  significance_level: 0.05
+  min_observations: 252
+
+# OU Model - ENFORCE QUALITY (with controlled flexibility)
+ou_model:
+  min_r_squared: 0.15  # Reject weak mean reversion
+  min_half_life: 3.0   # Too fast = noise
+  max_half_life: 40.0  # Too slow = no edge
+  min_theta: 0.02      # Minimum mean reversion speed
+  
+  # ALPHA DISCOVERY: Controlled flexibility
+  # If R² is strong (>0.25), allow shorter half-life with reduced size
+  strong_r_squared_threshold: 0.25
+  allow_fast_reversion_if_strong: true  # Trade fast mean reversion if R² high
+
+# Kalman Filter
+kalman:
+  transition_cov: 0.0001  # 1e-4 as decimal (YAML-safe)
+  observation_cov: 0.01   # 1e-2 as decimal (YAML-safe)
+
+# Regime Filter (HMM) - RISK GATING ONLY
+regimes:
+  enabled: true
+  n_regimes: 2  # Simple: calm vs volatile
+  random_state: 42
+
+# Alpha Layer - Signal generation with model validity enforcement
+alpha:
+  entry_z: 2.0          # Entry threshold
+  exit_z: 0.3           # Asymmetric exit (take profits faster)
+  stop_loss_z: 4.0      # Stop loss
+  max_hold_days: 30     # Kill stale trades
+  velocity_threshold: 0.5  # Z-score velocity filter
+  half_life_multiplier: 1.5  # Time-to-reversion check (enforces OU validity)
+
+# Portfolio - Cross-sectional diversification
+portfolio:
+  enabled: true  # Use portfolio-level execution
+  allocation_method: 'equal_risk'  # 'equal_risk' or 'inverse_volatility'
+  target_volatility: 0.10  # 10% annual volatility target
+  min_pairs: 3  # Minimum pairs for portfolio mode
+
+# Execution - Realistic but not alpha-killing
+execution:
+  transaction_cost_bps: 3.0  # 3 bps per side
+  slippage_bps: 1.5          # 1.5 bps slippage
+
+# Performance Targets
+targets:
+  min_sharpe: 1.0
+  max_drawdown: 0.20

@@ -1,0 +1,30 @@
+# Backtesting configuration
+
+backtest:
+  # Execution parameters
+  latency_events: 1  # minimum delay between signal and execution
+  
+  # Position limits
+  max_position: 1000  # maximum inventory (shares)
+  position_limit_pct: 0.5  # fraction of max position per trade
+  
+  # Risk management
+  stop_loss_ticks: 5  # stop loss in ticks
+  take_profit_ticks: 10  # take profit in ticks
+  
+  # Transaction costs
+  half_spread_cost: true  # pay half spread on market orders
+  fixed_cost_bps: 0.0  # additional fixed cost in basis points
+  
+  # Signal thresholds
+  entry_threshold: 0.6  # minimum prediction probability
+  exit_threshold: 0.4  # exit when probability drops below
+  
+  # Sizing
+  base_size: 100  # base order size
+  scale_by_confidence: true  # scale size by prediction confidence
+  scale_by_spread: true  # reduce size when spread is wide
+  
+  # Evaluation
+  risk_free_rate: 0.0  # for Sharpe calculation
+  periods_per_year: 252 * 6.5 * 3600  # approximate events per year

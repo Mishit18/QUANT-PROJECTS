@@ -1,0 +1,104 @@
+# Systematic Factor Modeling Configuration
+# Production-grade config for equity risk premia analysis
+
+data:
+  # Data source and universe
+  universe: "SP100"  # Top 100 stocks from S&P 500
+  start_date: "2015-01-01"
+  end_date: "2024-12-31"
+  frequency: "daily"
+  
+  # Data cleaning
+  min_history_days: 252  # Minimum 1 year of data
+  outlier_threshold: 5.0  # Standard deviations for outlier detection
+  max_missing_pct: 0.05  # Maximum 5% missing data allowed
+  
+  # Return computation
+  return_type: "log"  # log or simple
+  risk_free_rate: 0.02  # Annual risk-free rate (2%)
+
+pca:
+  # PCA configuration
+  n_components: 10  # Number of PCA factors to extract
+  min_variance_explained: 0.80  # Target cumulative variance
+  rolling_window: 252  # Trading days for rolling PCA
+  
+  # Eigen-portfolio construction
+  normalize_weights: true
+  weight_cap: 0.15  # Maximum weight per stock in eigen-portfolio
+
+factors:
+  # Classical factor definitions
+  value:
+    metric: "book_to_market"  # or earnings_yield, dividend_yield
+    lookback: 252
+    
+  momentum:
+    lookback: 126  # 6-month momentum
+    skip_days: 21  # Skip most recent month
+    
+  size:
+    metric: "market_cap"
+    
+  quality:
+    metrics: ["roa", "roe", "debt_to_equity"]
+    
+  low_vol:
+    lookback: 63  # 3-month realized volatility
+  
+  # Factor portfolio construction
+  long_short: true
+  quantile_split: 0.3  # Top/bottom 30% for long/short
+  weighting: "equal"  # equal or value-weighted
+
+regression:
+  # Factor model estimation
+  estimation_window: 252  # 1 year rolling
+  min_observations: 126  # Minimum data points
+  
+  # Statistical tests
+  newey_west_lags: 5  # HAC standard errors
+  confidence_level: 0.95
+
+regime:
+  # Regime definitions
+  volatility_threshold: "median"  # or specific value
+  market_threshold: 0.0  # For bull/bear classification
+  
+  # Regime types to analyze
+  regimes:
+    - "high_vol"
+    - "low_vol"
+    - "bull"
+    - "bear"
+    - "crisis"  # VIX > 30 or drawdown > 20%
+
+portfolio:
+  # Portfolio controls
+  target_volatility: 0.10  # 10% annualized
+  rebalance_frequency: 21  # Monthly rebalancing
+  
+  # Transaction costs
+  cost_bps: 10  # 10 bps per trade
+  
+  # Turnover analysis
+  max_turnover: 2.0  # 200% annual turnover cap
+
+analysis:
+  # Analysis parameters
+  rolling_windows: [63, 126, 252]  # 3m, 6m, 1y
+  bootstrap_samples: 1000
+  
+  # Output
+  plot_style: "seaborn-v0_8-darkgrid"
+  figure_dpi: 300
+  save_format: "png"
+
+paths:
+  # Directory structure
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  results: "results"
+  plots: "plots"
+  reports: "reports"
+  logs: "logs"

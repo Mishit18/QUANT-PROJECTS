@@ -1,0 +1,45 @@
+# Venue Configuration
+# Define characteristics of simulated trading venues
+
+venues:
+  - id: VENUE_A
+    name: "Fast Exchange"
+    base_latency_us: 50
+    latency_std_dev_us: 10
+    maker_fee_bps: 0
+    taker_fee_bps: 5
+    initial_mid_price: 100.0
+    initial_spread_bps: 3.0
+    initial_depth: 5000
+    num_levels: 5
+    description: "Low latency venue with tight spreads"
+
+  - id: VENUE_B
+    name: "Deep Pool"
+    base_latency_us: 150
+    latency_std_dev_us: 30
+    maker_fee_bps: -2
+    taker_fee_bps: 3
+    initial_mid_price: 100.0
+    initial_spread_bps: 5.0
+    initial_depth: 10000
+    num_levels: 5
+    description: "High liquidity venue with maker rebates"
+
+  - id: VENUE_C
+    name: "Regional Exchange"
+    base_latency_us: 250
+    latency_std_dev_us: 50
+    maker_fee_bps: 0
+    taker_fee_bps: 7
+    initial_mid_price: 100.0
+    initial_spread_bps: 4.0
+    initial_depth: 3000
+    num_levels: 5
+    description: "Higher latency regional venue"
+
+# Venue Selection Criteria:
+# - Latency: Lower is better for time-sensitive orders
+# - Spread: Tighter spreads reduce execution cost
+# - Depth: More depth allows larger orders without impact
+# - Fees: Consider maker/taker fee structure

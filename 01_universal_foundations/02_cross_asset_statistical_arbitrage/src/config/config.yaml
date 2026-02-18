@@ -1,0 +1,40 @@
+data:
+  universe_size: 500
+  start_date: "2015-01-01"
+  end_date: "2024-12-31"
+  min_price: 5.0
+  min_volume: 1000000
+  
+features:
+  lookback_windows: [5, 10, 20, 60, 120, 252]
+  volatility_windows: [20, 60, 120]
+  volume_windows: [20, 60]
+  cross_sectional: false
+  
+targets:
+  horizon: 5
+  method: "vol_scaled"
+  rank_scale: 0.5
+  vol_window: 20
+  
+models:
+  train_window: 252
+  test_window: 21
+  retrain_freq: 21
+  
+backtest:
+  long_short: true
+  leverage: 1.0
+  vol_target: 0.10
+  tcost_bps: 7.5
+  slippage_bps: 2.5
+  rebalance_freq: 1
+  
+neutralization:
+  market_beta: true
+  sector: true
+  pca_factors: 10
+  
+robustness:
+  n_bootstrap: 1000
+  confidence: 0.95

@@ -1,0 +1,57 @@
+# Hawkes Process-Driven LOB Simulation Configuration
+
+simulation:
+  duration: 1000.0          # Simulation time horizon
+  random_seed: 42           # Reproducibility
+  num_events_target: 10000  # Approximate number of events
+
+hawkes:
+  num_types: 6  # limit_buy, limit_sell, market_buy, market_sell, cancel_buy, cancel_sell
+  
+  # Baseline intensities (events per unit time)
+  baseline:
+    - 0.5   # limit_buy
+    - 0.5   # limit_sell
+    - 0.2   # market_buy
+    - 0.2   # market_sell
+    - 0.3   # cancel_buy
+    - 0.3   # cancel_sell
+  
+  # Excitation matrix (alpha_ij): how much event j excites event i
+  # Rows: target event type, Columns: source event type
+  excitation:
+    - [0.3, 0.1, 0.2, 0.0, 0.1, 0.0]  # limit_buy excited by
+    - [0.1, 0.3, 0.0, 0.2, 0.0, 0.1]  # limit_sell excited by
+    - [0.2, 0.0, 0.2, 0.1, 0.0, 0.0]  # market_buy excited by
+    - [0.0, 0.2, 0.1, 0.2, 0.0, 0.0]  # market_sell excited by
+    - [0.1, 0.0, 0.0, 0.0, 0.2, 0.0]  # cancel_buy excited by
+    - [0.0, 0.1, 0.0, 0.0, 0.0, 0.2]  # cancel_sell excited by
+  
+  # Decay rates (beta_ij): how fast excitation decays
+  decay:
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+    - [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+
+lob:
+  tick_size: 0.01
+  initial_mid_price: 100.0
+  num_price_levels: 50
+  initial_depth: 100  # Initial volume at each level
+
+agent:
+  inventory_limit: 100
+  risk_aversion: 0.01
+  target_spread_ticks: 2
+  min_spread_ticks: 1
+  max_spread_ticks: 5
+  latency_ms: 1.0
+  adverse_selection_threshold: 0.7  # Imbalance threshold to widen spread
+  quote_size: 10
+
+backtest:
+  transaction_cost_bps: 0.0  # Additional transaction costs
+  funding_cost_bps: 0.0      # Inventory holding cost

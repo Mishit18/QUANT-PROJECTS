@@ -1,0 +1,22 @@
+date_range: !!python/tuple
+- '2015-01-02'
+- '2023-12-29'
+outliers:
+  DIA: 10
+  IWM: 7
+  QQQ: 8
+  SPY: 8
+  XLE: 7
+  XLF: 8
+  XLK: 7
+  XLV: 8
+processed_observations: 2264
+processed_tickers:
+- DIA
+- IWM
+- QQQ
+- SPY
+- XLE
+- XLF
+- XLK
+- XLV

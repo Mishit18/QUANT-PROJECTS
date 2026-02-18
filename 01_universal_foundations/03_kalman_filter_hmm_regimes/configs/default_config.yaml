@@ -1,0 +1,87 @@
+# Default configuration for Kalman Filter + HMM strategy
+
+# Data settings
+data:
+  tickers: ['SPY', 'QQQ', 'TLT']
+  start_date: '2015-01-01'
+  end_date: '2020-12-31'
+  frequency: 'daily'
+
+# Preprocessing
+preprocessing:
+  handle_missing: 'forward_fill'
+  outlier_method: 'winsorize'
+  outlier_threshold: 3.0
+  normalize: false
+
+# Kalman Filter settings
+kalman_filter:
+  model_type: 'local_level'  # 'local_level', 'local_linear_trend', 'dynamic_regression'
+  observation_variance: 1.0
+  state_variance: 0.1
+  initial_state_variance: 10.0
+
+# HMM settings
+hmm:
+  n_regimes: 3
+  n_iter: 50
+  tolerance: 1.0e-4
+  random_state: 42
+
+# Signal generation
+signals:
+  strategy_type: 'regime_aware'  # 'kalman_trend', 'regime_aware', 'enhanced'
+  vol_target: 0.15
+  lookback: 20
+  regime_strategies:
+    0: 'trend'           # Low-vol regime
+    1: 'mean_reversion'  # High-vol regime
+    2: 'risk_off'        # Crisis regime
+  
+  # ENHANCED FEATURES (economically justified, interview-safe)
+  enhanced:
+    enabled: true
+    max_leverage: 1.5              # Maximum leverage (regime-dependent)
+    vol_target_enhanced: 0.12      # Target volatility for enhanced strategy (12%)
+    enable_regime_gating: false    # Gate signals in unfavorable regimes (disabled for now)
+    regime_position_sizing: true   # Scale positions by regime risk budget
+    vol_floor: 0.05                # Minimum volatility estimate
+    vol_cap: 0.30                  # Maximum volatility estimate
+    scaling_bounds: [0.3, 2.5]     # Min/max position scaling factors
+    
+    # TSMOM ALPHA SOURCE (interview-safe, economically justified)
+    momentum:
+      enabled: true                # Enable TSMOM alpha source
+      lookbacks: [63, 126, 252]    # 3, 6, 12 month lookbacks (standard)
+      weight: 0.4                  # Weight on TSMOM (60% Kalman, 40% TSMOM)
+      equal_weight_lookbacks: true # Equal weight across lookbacks
+
+# Backtesting
+backtest:
+  transaction_cost: 0.0005  # 5 bps
+  leverage: 1.0
+  initial_capital: 1000000.0
+  walk_forward:
+    enabled: false
+    train_window: 252
+    test_window: 63
+
+# Evaluation
+evaluation:
+  benchmark: 'SPY'
+  confidence_level: 0.95
+  rolling_window: 252
+
+# Visualization
+visualization:
+  save_figures: true
+  figure_dir: 'figures'
+  dpi: 300
+  format: 'png'
+
+# Output
+output:
+  save_results: true
+  results_dir: 'results'
+  save_models: true
+  models_dir: 'models'
