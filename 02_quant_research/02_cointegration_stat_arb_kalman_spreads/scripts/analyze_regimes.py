@@ -562,11 +562,11 @@ class Regimenalyzer:
         # Half-life statistics
         hl_mean = metrics['half_life']['half_life'].mean()
         hl_std = metrics['half_life']['half_life'].std()
-        report.append("MEN-REVERSION HRTERISTIS:")
-        report.append(f"  - verage half-life: {hl_mean:.f} ± {hl_std:.f} days")
-        report.append(f"  - Median half-life:  {metrics['half_life']['half_life'].median():.f} days")
-        report.append(f"  - Min half-life:     {metrics['half_life']['half_life'].min():.f} days")
-        report.append(f"  - Max half-life:     {metrics['half_life']['half_life'].max():.f} days")
+        report.append("MEAN-REVERSION CHARACTERISTICS:")
+        report.append(f"  - Average half-life: {hl_mean:.1f} ± {hl_std:.1f} days")
+        report.append(f"  - Median half-life: {metrics['half_life']['half_life'].median():.1f} days")
+        report.append(f"  - Min half-life: {metrics['half_life']['half_life'].min():.1f} days")
+        report.append(f"  - Max half-life: {metrics['half_life']['half_life'].max():.1f} days")
         report.append("")
         
         # Interpretation

@@ -1,0 +1,134 @@
+{
+  "statistical": {
+    "eigenvalues": [
+      19.550690361923404,
+      3.692298344243466,
+      2.372496193043256,
+      1.649243361173923,
+      1.1426421221382184,
+      1.0736534120575636,
+      0.9285415409419822,
+      0.8779236573670497,
+      0.826809736045929,
+      0.7745919688484698
+    ],
+    "variance_explained": [
+      0.3989936808555801,
+      0.0753530274335402,
+      0.048418289653944055,
+      0.03365802777905969,
+      0.023319226982412646,
+      0.021911294123623772,
+      0.018949827366162922,
+      0.017916809334021445,
+      0.01687366808257,
+      0.015807999364254505
+    ],
+    "cumulative_variance": [
+      0.3989936808555801,
+      0.47434670828912034,
+      0.5227649979430644,
+      0.5564230257221241,
+      0.5797422527045367,
+      0.6016535468281605,
+      0.6206033741943234,
+      0.6385201835283448,
+      0.6553938516109148,
+      0.6712018509751693
+    ],
+    "interpretation": "Measures covariance structure, not expected returns"
+  },
+  "explanatory": {
+    "note": "R\u00b2 and incremental fit computed in time-series regression",
+    "interpretation": "Measures ability to explain cross-sectional variation"
+  },
+  "economic": {
+    "PC1": {
+      "mean_return_daily": -0.003928003295602876,
+      "mean_return_annual": -0.9898568304919246,
+      "volatility_daily": 0.06776367063112453,
+      "volatility_annual": 1.075714922489081,
+      "sharpe_ratio": -0.9201850878869559,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC2": {
+      "mean_return_daily": 0.0012660433348078445,
+      "mean_return_annual": 0.31904292037157683,
+      "volatility_daily": 0.03396338055677039,
+      "volatility_annual": 0.5391519518175653,
+      "sharpe_ratio": 0.5917495416571033,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC3": {
+      "mean_return_daily": -0.000716740169358842,
+      "mean_return_annual": -0.1806185226784282,
+      "volatility_daily": 0.023025243502121776,
+      "volatility_annual": 0.36551440909992083,
+      "sharpe_ratio": -0.4941488438806046,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC4": {
+      "mean_return_daily": 0.00018600381614552772,
+      "mean_return_annual": 0.04687296166867298,
+      "volatility_daily": 0.017021898903285305,
+      "volatility_annual": 0.2702142680410561,
+      "sharpe_ratio": 0.17346590173969334,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC5": {
+      "mean_return_daily": -0.00022048341305949402,
+      "mean_return_annual": -0.055561820090992496,
+      "volatility_daily": 0.018662127579354808,
+      "volatility_annual": 0.29625209106199585,
+      "sharpe_ratio": -0.18754912376083527,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC6": {
+      "mean_return_daily": 0.0006182543273357646,
+      "mean_return_annual": 0.15580009048861268,
+      "volatility_daily": 0.01581877928948851,
+      "volatility_annual": 0.2511153362676337,
+      "sharpe_ratio": 0.6204323989298848,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC7": {
+      "mean_return_daily": -7.807093135325648e-05,
+      "mean_return_annual": -0.019673874701020635,
+      "volatility_daily": 0.013530735371248916,
+      "volatility_annual": 0.2147937650888991,
+      "sharpe_ratio": -0.09159425411104456,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC8": {
+      "mean_return_daily": 0.0004123063738331007,
+      "mean_return_annual": 0.10390120620594137,
+      "volatility_daily": 0.014135690950841476,
+      "volatility_annual": 0.22439713719595625,
+      "sharpe_ratio": 0.4630237600366933,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC9": {
+      "mean_return_daily": 4.097846476384337e-05,
+      "mean_return_annual": 0.01032657312048853,
+      "volatility_daily": 0.015907716001115946,
+      "volatility_annual": 0.2525271627959741,
+      "sharpe_ratio": 0.04089292021560368,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    },
+    "PC10": {
+      "mean_return_daily": 0.001043373548643333,
+      "mean_return_annual": 0.2629301342581199,
+      "volatility_daily": 0.023152427809995702,
+      "volatility_annual": 0.36753339739574653,
+      "sharpe_ratio": 0.7153911348497302,
+      "interpretation": "PC1 typically = market factor; others may have zero premia"
+    }
+  },
+  "interpretation_guide": {
+    "statistical_vs_economic": "High variance explained does NOT imply high Sharpe ratio",
+    "zero_premia_factors": "Many PCA factors are risk factors with zero expected return",
+    "pc1_interpretation": "PC1 typically captures market factor (positive premia expected)",
+    "higher_pcs": "PC2+ capture sector/style rotations (may have zero or negative premia)",
+    "professional_use": "PCA factors used for risk decomposition, not alpha generation"
+  }
+}

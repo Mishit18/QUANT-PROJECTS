@@ -1,0 +1,35 @@
+================================================================================
+REGIME INSTABILITY ANALYSIS: QQQ-XLV
+================================================================================
+
+OVERALL REGIME STABILITY: 0.3% of time in STABLE regime
+UNSTABLE PERIODS: 99.7% of time
+
+STABILITY BREAKDOWN BY CRITERION:
+  - Stationarity (ADF):        3.2%
+  - Cointegration (Johansen):  5.2%
+  - Half-Life Stability:       80.7%
+  - High Correlation (>0.7):   57.6%
+  - Normal Volatility:         87.2%
+
+MOST UNSTABLE PERIODS:
+  - 2016-01-04 to 2021-04-15 (1330 days)
+  - 2021-04-21 to 2023-12-29 (676 days)
+
+MEAN-REVERSION CHARACTERISTICS:
+  - Average half-life: inf ± nan days
+  - Median half-life:  27.4 days
+  - Min half-life:     8.5 days
+  - Max half-life:     inf days
+
+INTERPRETATION:
+  ⚠️  CRITICAL: Pair is unstable >50% of the time
+  → Statistical arbitrage assumptions frequently violated
+  → Strategy should NOT be traded without regime filters
+
+FAILURE MODE ANALYSIS:
+  - Spread frequently non-stationary → Cointegration breaking down
+  - Johansen test frequently fails → Relationship is weak
+  - Correlation drops frequently → Relationship weakening
+
+================================================================================

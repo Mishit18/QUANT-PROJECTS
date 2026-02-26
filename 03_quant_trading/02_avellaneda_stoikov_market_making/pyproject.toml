@@ -2,7 +2,6 @@
 name = "auction-theoretic-market-making"
 version = "1.0.0"
 description = "Production-grade Avellaneda-Stoikov market-making framework with HJB optimization"
-authors = ["Elite Quant Research"]
 license = "MIT"
 readme = "README.md"
 

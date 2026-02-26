@@ -1,0 +1,29 @@
+{
+  "mean_return": 0.1416476518710801,
+  "mean_volatility": 0.24279148084230387,
+  "mean_sharpe": 0.5699901153583344,
+  "mean_correlation": 0.3788594761305272,
+  "stationarity_tests": {
+    "AAPL": {
+      "statistic": -15.669323055302591,
+      "p_value": 1.5196321237329124e-28
+    },
+    "ABBV": {
+      "statistic": -12.209863753968671,
+      "p_value": 1.1704804167629676e-22
+    },
+    "ABT": {
+      "statistic": -52.62509504782729,
+      "p_value": 0.0
+    },
+    "ACN": {
+      "statistic": -13.504065167626184,
+      "p_value": 2.9386919772521715e-25
+    },
+    "ADBE": {
+      "statistic": -16.787023052945692,
+      "p_value": 1.2508089127303015e-29
+    }
+  },
+  "outlier_pct": 0.0
+}

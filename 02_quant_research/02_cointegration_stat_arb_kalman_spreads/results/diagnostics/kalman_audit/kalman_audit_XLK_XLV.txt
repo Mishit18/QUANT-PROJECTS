@@ -1,0 +1,52 @@
+================================================================================
+KALMAN FILTER AUDIT REPORT: XLK-XLV
+================================================================================
+
+A. STATE-SPACE MODEL SPECIFICATION:
+   State equation:    β_t = β_{t-1} + w_t,  w_t ~ N(0, Q)
+   Observation eq:    y_t = β_t * x_t + v_t,  v_t ~ N(0, R)
+
+   Q (process noise):      1.00e-05
+   R (measurement noise):  1.00e-03
+   Q/R ratio:              0.0100
+
+B. HEDGE RATIO ESTIMATES:
+   Static OLS β:           1.1061
+   Kalman mean β:          2.2720
+   Kalman std β:           0.5715
+   Kalman range:           [1.3608, 3.4505]
+   Deviation from OLS:     105.41%
+
+C. FILTER DIAGNOSTICS:
+   Average Kalman gain:    0.025977
+   Innovation std:         1.2899
+
+D. PARAMETER SENSITIVITY:
+   Q/R Ratio Impact on β Volatility:
+     Q=1e-06, R=1e-04: β_std=0.5715
+     Q=1e-06, R=1e-03: β_std=0.5716
+     Q=1e-06, R=1e-02: β_std=0.5720
+     Q=1e-05, R=1e-04: β_std=0.5715
+     Q=1e-05, R=1e-03: β_std=0.5715
+     Q=1e-05, R=1e-02: β_std=0.5716
+     Q=1e-04, R=1e-04: β_std=0.5715
+     Q=1e-04, R=1e-03: β_std=0.5715
+     Q=1e-04, R=1e-02: β_std=0.5715
+     Q=1e-03, R=1e-04: β_std=0.5715
+     Q=1e-03, R=1e-03: β_std=0.5715
+     Q=1e-03, R=1e-02: β_std=0.5715
+
+E. INTERPRETATION:
+   ⚠️  Hedge ratio is HIGHLY VOLATILE
+   → May indicate model mis-specification or unstable relationship
+
+   ⚠️  Kalman mean deviates significantly from OLS
+   → May need parameter adjustment
+
+F. RECOMMENDATIONS:
+   1. Consider increasing R (measurement noise) to smooth β
+   2. Or decrease Q (process noise) for more stable estimates
+   2. Compare spread stationarity: OLS vs Kalman
+   3. Backtest with time-varying β to assess performance impact
+
+================================================================================

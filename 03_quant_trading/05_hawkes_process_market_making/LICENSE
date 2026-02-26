@@ -1,27 +1,37 @@
-MIT License
+Copyright (c) 2026 Mishit18. All Rights Reserved.
 
-Copyright (c) 2024 Hawkes LOB Simulation Project
+This code and associated documentation files (the "Software") are the proprietary 
+property of the copyright holder.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+NO LICENSE IS GRANTED. All rights are reserved.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+You may view this code for evaluation purposes only (e.g., for recruitment, 
+code review, or educational assessment). You may NOT:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+- Copy, modify, or distribute this code
+- Use this code for commercial purposes
+- Use this code in your own projects
+- Create derivative works based on this code
+- Sublicense or sell this code
 
-DISCLAIMER:
+This code is provided for portfolio demonstration and recruitment purposes only.
 
-This software is provided for educational and research purposes only. It is not
-intended for use in production trading systems. Trading financial instruments
-involves substantial risk of loss.
+---
+
+DISCLAIMER
+
+This repository contains research and educational code for portfolio demonstration
+purposes. It is NOT:
+
+- Investment advice
+- Production-ready for live trading without significant additional work
+- Guaranteed to be profitable or accurate
+- Suitable for real-world trading without proper risk management, infrastructure,
+  and regulatory compliance
+
+The code is provided for educational purposes and to demonstrate technical
+capabilities. Use at your own risk. Past performance does not guarantee future
+results. Trading financial instruments involves substantial risk of loss.
+
+Consult with qualified professionals before making any investment decisions.
+

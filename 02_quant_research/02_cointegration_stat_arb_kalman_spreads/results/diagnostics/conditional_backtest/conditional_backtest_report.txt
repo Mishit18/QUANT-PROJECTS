@@ -1,0 +1,87 @@
+================================================================================
+CONDITIONAL BACKTEST REPORT
+================================================================================
+
+This report compares three approaches:
+1. BASELINE: No filters (original strategy)
+2. REGIME FILTERED: Trade only when cointegration assumptions hold
+3. FULL FILTERED: Regime + Kalman confidence filters
+
+================================================================================
+
+PAIR: XLK-XLV
+--------------------------------------------------------------------------------
+
+PERFORMANCE COMPARISON:
+
+Approach                  Return          Sharpe          Trades    
+-----------------------------------------------------------------
+Baseline (No Filters)          -9.9067%           0.05        67
+Regime Filtered                 2.0404%           0.21        11
+Full Filtered                   2.0404%           0.21        11
+
+FILTER STATISTICS:
+
+Regime Filter:
+  - Suppression rate: 98.9%
+  - Trades suppressed: 1990
+  - Trades allowed: 23
+
+Kalman Confidence Filter:
+  - Low confidence rate: 59.2%
+  - Low confidence periods: 1341
+  - High confidence periods: 923
+
+INTERPRETATION:
+  ✓ Regime filtering IMPROVES Sharpe ratio
+  → Trading only during valid regimes enhances risk-adjusted returns
+  → Kalman confidence does not add incremental value
+  → Regime filter is sufficient
+
+================================================================================
+
+PAIR: QQQ-XLV
+--------------------------------------------------------------------------------
+
+PERFORMANCE COMPARISON:
+
+Approach                  Return          Sharpe          Trades    
+-----------------------------------------------------------------
+Baseline (No Filters)          26.7778%           0.23        73
+Regime Filtered                 2.7329%           0.36         5
+Full Filtered                   2.7329%           0.36         5
+
+FILTER STATISTICS:
+
+Regime Filter:
+  - Suppression rate: 99.7%
+  - Trades suppressed: 2006
+  - Trades allowed: 7
+
+Kalman Confidence Filter:
+  - Low confidence rate: 2.6%
+  - Low confidence periods: 59
+  - High confidence periods: 2205
+
+INTERPRETATION:
+  ✓ Regime filtering IMPROVES Sharpe ratio
+  → Trading only during valid regimes enhances risk-adjusted returns
+  → Kalman confidence does not add incremental value
+  → Regime filter is sufficient
+
+================================================================================
+
+OVERALL ASSESSMENT:
+
+The conditional backtest demonstrates:
+1. Regime filters suppress trades during unstable periods
+2. This reduces exposure when assumptions fail
+3. Performance improves ONLY when assumptions hold
+4. Long idle periods are EXPECTED and CORRECT
+
+WHY THIS MATTERS:
+- Real hedge funds do NOT trade continuously
+- Capital preservation > constant activity
+- Regime awareness is professional risk management
+
+================================================================================
