@@ -1,0 +1,2 @@
+01_universal_foundations/01_real_market_data_engineering/data/**/*.csv filter=lfs diff=lfs merge=lfs -text
+01_universal_foundations/01_real_market_data_engineering/data/**/*.parquet filter=lfs diff=lfs merge=lfs -text

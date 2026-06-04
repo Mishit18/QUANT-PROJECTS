@@ -47,10 +47,13 @@ ENV/
 # Keep directory structure but ignore data
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/*.csv
 data/cleaned/*
 !data/cleaned/.gitkeep
+!data/cleaned/*.parquet
 data/features/*
 !data/features/.gitkeep
+!data/features/*.parquet
 
 # Reports (generated)
 reports/*.json
