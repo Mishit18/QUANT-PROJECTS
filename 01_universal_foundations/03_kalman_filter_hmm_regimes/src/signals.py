@@ -88,7 +88,8 @@ class RegimeAwareSignal(BaseSignal):
     def __init__(self, 
                  kf: KalmanFilter,
                  hmm: GaussianHMM,
-                 regime_strategies: Optional[Dict[int, str]] = None):
+                 regime_strategies: Optional[Dict[int, str]] = None,
+                 probability_method: str = 'filtered'):
         """
         Initialize regime-aware signal.
         
@@ -101,18 +102,37 @@ class RegimeAwareSignal(BaseSignal):
         regime_strategies : dict, optional
             Mapping from regime index to strategy type
             {'trend', 'mean_reversion', 'risk_off'}
+        probability_method : str
+            HMM probability method. Use 'filtered' for causal trading signals.
         """
         self.kf = kf
         self.hmm = hmm
+        self.probability_method = probability_method
         
-        # Default regime strategies (assumes 3 regimes)
         if regime_strategies is None:
-            regime_strategies = {
-                0: 'trend',           # Low-vol trending
-                1: 'mean_reversion',  # High-vol mean-reverting
-                2: 'risk_off'         # Crisis
-            }
+            regime_strategies = self._default_regime_strategies(hmm.n_regimes)
         self.regime_strategies = regime_strategies
+
+    @staticmethod
+    def _default_regime_strategies(n_regimes: int) -> Dict[int, str]:
+        """
+        Map volatility-ordered HMM regimes to defensible trading behavior.
+
+        GaussianHMM relabels regimes by ascending volatility after fit:
+        - lowest volatility: trend-following
+        - middle regimes: mean-reversion / reduced aggression
+        - highest volatility: risk-off
+        """
+        if n_regimes <= 0:
+            raise ValueError("n_regimes must be positive")
+
+        if n_regimes == 1:
+            return {0: 'trend'}
+
+        strategies = {0: 'trend', n_regimes - 1: 'risk_off'}
+        for k in range(1, n_regimes - 1):
+            strategies[k] = 'mean_reversion'
+        return strategies
     
     def generate(self, returns: np.ndarray) -> np.ndarray:
         """
@@ -132,8 +152,8 @@ class RegimeAwareSignal(BaseSignal):
         if np.any(np.isnan(returns)) or np.any(np.isinf(returns)):
             raise ValueError("Input returns contain NaN/Inf values")
         
-        # Get regime probabilities
-        regime_probs = self.hmm.predict_proba(returns)
+        # Get causal regime probabilities for trading.
+        regime_probs = self.hmm.predict_proba(returns, method=self.probability_method)
         n_regimes = regime_probs.shape[1]
         
         # Validate regime probabilities

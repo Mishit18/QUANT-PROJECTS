@@ -146,8 +146,8 @@ class RegimeConditionedPositionSizer:
         if np.any(np.isnan(base_signals)) or np.any(np.isinf(base_signals)):
             raise ValueError("Base signals contain NaN/Inf")
         
-        # Get regime probabilities
-        regime_probs = self.hmm.predict_proba(returns)
+        # Use filtered probabilities for trading causality.
+        regime_probs = self.hmm.predict_proba(returns, method='filtered')
         
         # Validate regime probabilities
         if np.any(np.isnan(regime_probs)) or np.any(np.isinf(regime_probs)):
@@ -597,11 +597,11 @@ class RegimeGatedSignalActivator:
     
     def identify_favorable_regimes(self, returns: np.ndarray) -> list:
         """
-        Identify favorable regimes based on historical performance.
+        Identify favorable regimes from fitted emission parameters.
         
         ECONOMIC LOGIC:
-        - Regimes with positive mean return and low volatility are favorable
-        - Avoid regimes with negative mean or extreme volatility
+        - Regimes with positive fitted mean and below-median volatility are favorable
+        - Avoid using realized full-sample regime paths for trading gates
         
         Parameters
         ----------
@@ -613,27 +613,22 @@ class RegimeGatedSignalActivator:
         favorable_regimes : list
             List of favorable regime indices
         """
-        regimes = self.hmm.predict(returns)
         n_regimes = self.hmm.n_regimes
+        means = self.hmm.means[:, 0] if self.hmm.means.ndim > 1 else self.hmm.means
+        vols = self.hmm.regime_volatilities()
+        median_vol = np.median(vols)
         
         favorable = []
         
         for k in range(n_regimes):
-            mask = regimes == k
-            if mask.sum() < 10:  # Insufficient data
-                continue
-            
-            regime_returns = returns[mask]
-            mean_ret = regime_returns.mean()
-            vol_ret = regime_returns.std()
-            
-            # Favorable if positive mean and not extreme volatility
-            if mean_ret > 0 and vol_ret < returns.std() * 2:
+            # Favorable if fitted expected return is positive and risk is not
+            # among the high-vol states.
+            if means[k] > 0 and vols[k] <= median_vol:
                 favorable.append(k)
         
-        # If no favorable regimes found, default to all
+        # If no favorable regimes found, keep only the lowest-volatility state.
         if len(favorable) == 0:
-            favorable = list(range(n_regimes))
+            favorable = [int(np.argmin(vols))]
         
         return favorable
     
@@ -668,8 +663,8 @@ class RegimeGatedSignalActivator:
         if self.favorable_regimes is None:
             self.favorable_regimes = self.identify_favorable_regimes(returns)
         
-        # Get regime probabilities
-        regime_probs = self.hmm.predict_proba(returns)
+        # Use filtered probabilities for trading causality.
+        regime_probs = self.hmm.predict_proba(returns, method='filtered')
         
         # Compute probability of being in favorable regime
         favorable_prob = np.sum(regime_probs[:, self.favorable_regimes], axis=1)

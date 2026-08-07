@@ -563,4 +563,4 @@ if __name__ == '__main__':
     print(f"  Avg Gross Exposure: {results['avg_gross_exposure']:.2f}")
     print(f"  Avg Turnover: {results['avg_turnover']:.2f}")
     
-    print("\n✓ Multi-asset portfolio test passed")
+    print("\n[OK] Multi-asset portfolio test passed")

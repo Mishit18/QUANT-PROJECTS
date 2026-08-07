@@ -219,8 +219,8 @@ y_t = H_t x_t + v_t,      v_t ~ N(0, R_t)  [Observation equation]
 **Assumption:** Current regime probabilities predict future returns.
 
 **Reality:**
-- Regime detection is backward-looking (smoothed probabilities)
-- Filtered probabilities are noisy
+- Smoothed regime probabilities are backward-looking and must remain diagnostic-only
+- Filtered probabilities are causal but noisy
 - Regime switches are often unpredictable
 
 **Implications:**

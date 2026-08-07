@@ -10,14 +10,41 @@ Implements:
 
 import numpy as np
 from typing import Tuple, Optional, Dict
-from scipy.stats import multivariate_normal
-from scipy.special import logsumexp
 from src.utils import ensure_positive_definite
+
+
+def _logsumexp(a: np.ndarray, axis=None, keepdims: bool = False) -> np.ndarray:
+    """
+    Lightweight NumPy log-sum-exp.
+
+    SciPy's generic implementation carries substantial array API overhead for
+    the tiny K-dimensional reductions used inside the HMM recursion.
+    """
+    a = np.asarray(a, dtype=np.float64)
+
+    if axis is None:
+        a_max = np.max(a)
+        if not np.isfinite(a_max):
+            return a_max
+        return np.log(np.sum(np.exp(a - a_max))) + a_max
+
+    a_max = np.max(a, axis=axis, keepdims=True)
+    safe_max = np.where(np.isfinite(a_max), a_max, 0.0)
+    out = np.log(np.sum(np.exp(a - safe_max), axis=axis, keepdims=True)) + safe_max
+
+    if not keepdims:
+        out = np.squeeze(out, axis=axis)
+
+    return out
 
 
 class GaussianHMM:
     """
     Gaussian Hidden Markov Model for regime detection.
+
+    After fitting, regimes are relabeled in ascending emission volatility. This
+    makes regime 0 the lowest-volatility state and regime K-1 the highest-
+    volatility state, which gives trading code stable semantics across runs.
     
     Latent regime s_t ∈ {1, ..., K}
     Transition: P(s_t | s_{t-1}) = A[s_{t-1}, s_t]
@@ -26,9 +53,11 @@ class GaussianHMM:
     
     def __init__(self, 
                  n_regimes: int = 2,
-                 n_iter: int = 100,
+                 n_iter: int = 50,
                  tol: float = 1e-4,
-                 random_state: Optional[int] = None):
+                 random_state: Optional[int] = None,
+                 min_covar: float = 1e-6,
+                 covariance_floor_ratio: float = 0.05):
         """
         Initialize Gaussian HMM.
         
@@ -42,11 +71,18 @@ class GaussianHMM:
             Convergence tolerance
         random_state : int, optional
             Random seed
+        min_covar : float
+            Absolute covariance floor to prevent degenerate Gaussian regimes
+        covariance_floor_ratio : float
+            Additional floor as a fraction of the full-sample covariance
         """
         self.n_regimes = n_regimes
         self.n_iter = n_iter
         self.tol = tol
         self.random_state = random_state
+        self.min_covar = min_covar
+        self.covariance_floor_ratio = covariance_floor_ratio
+        self._covariance_floor = None
         
         # Model parameters
         self.transition_matrix = None  # A: (K, K)
@@ -56,9 +92,16 @@ class GaussianHMM:
         
         # Fitted flag
         self.is_fitted = False
+        self.converged_ = False
         
         # Convergence history
         self.log_likelihoods = []
+
+    def _covariance_epsilon(self) -> float:
+        """Current covariance floor used in initialization and EM updates."""
+        if self._covariance_floor is None:
+            return self.min_covar
+        return max(self.min_covar, self._covariance_floor)
     
     def _initialize_parameters(self, X: np.ndarray):
         """
@@ -69,15 +112,23 @@ class GaussianHMM:
         X : np.ndarray
             Data (n_samples, n_features)
         """
-        if self.random_state is not None:
-            np.random.seed(self.random_state)
+        rng = np.random.default_rng(self.random_state)
         
         n_samples, n_features = X.shape
         
-        # Initialize with k-means
-        from sklearn.cluster import KMeans
-        kmeans = KMeans(n_clusters=self.n_regimes, random_state=self.random_state, n_init=10)
-        labels = kmeans.fit_predict(X)
+        # Initialize clusters. For univariate returns, quantile bins are much
+        # faster and more stable than KMeans while preserving dispersion across
+        # regimes. For multivariate data, fall back to KMeans.
+        if n_features == 1:
+            thresholds = np.quantile(
+                X[:, 0],
+                np.linspace(0, 1, self.n_regimes + 1)[1:-1],
+            )
+            labels = np.searchsorted(thresholds, X[:, 0], side='right')
+        else:
+            from sklearn.cluster import KMeans
+            kmeans = KMeans(n_clusters=self.n_regimes, random_state=self.random_state, n_init=5)
+            labels = kmeans.fit_predict(X)
         
         # Initial state probabilities (uniform)
         self.initial_probs = np.ones(self.n_regimes) / self.n_regimes
@@ -98,12 +149,66 @@ class GaussianHMM:
                 cov = np.cov(X[mask].T)
                 if n_features == 1:
                     cov = cov.reshape(1, 1)
-                self.covariances[k] = ensure_positive_definite(cov)
+                self.covariances[k] = ensure_positive_definite(cov, epsilon=self._covariance_epsilon())
             else:
-                self.means[k] = X[np.random.randint(n_samples)]
-                self.covariances[k] = np.eye(n_features)
+                self.means[k] = X[rng.integers(n_samples)]
+                self.covariances[k] = np.eye(n_features) * self._covariance_epsilon()
     
-    def _forward(self, X: np.ndarray) -> Tuple[np.ndarray, float]:
+    def _log_emission_probabilities(self, X: np.ndarray) -> np.ndarray:
+        """
+        Vectorized log emission probabilities for all observations/regimes.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Observations (n_samples, n_features)
+
+        Returns
+        -------
+        np.ndarray
+            Log probabilities with shape (n_samples, n_regimes)
+        """
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+
+        log_probs = np.empty((len(X), self.n_regimes), dtype=np.float64)
+
+        n_features = X.shape[1]
+
+        for k in range(self.n_regimes):
+            mean = self.means[k]
+            cov = ensure_positive_definite(self.covariances[k], epsilon=self._covariance_epsilon())
+
+            if n_features == 1:
+                variance = max(float(cov[0, 0]), 1e-12)
+                diff = X[:, 0] - float(mean[0])
+                log_probs[:, k] = -0.5 * (
+                    np.log(2 * np.pi * variance) + (diff * diff) / variance
+                )
+                continue
+
+            try:
+                sign, logdet = np.linalg.slogdet(cov)
+                if sign <= 0:
+                    raise np.linalg.LinAlgError("Covariance is not positive definite")
+                inv_cov = np.linalg.inv(cov)
+            except np.linalg.LinAlgError:
+                cov = ensure_positive_definite(cov, epsilon=self._covariance_epsilon())
+                sign, logdet = np.linalg.slogdet(cov)
+                inv_cov = np.linalg.pinv(cov)
+
+            diff = X - mean
+            quadratic = np.einsum('ij,jk,ik->i', diff, inv_cov, diff)
+            log_probs[:, k] = -0.5 * (
+                n_features * np.log(2 * np.pi) + logdet + quadratic
+            )
+
+        return log_probs
+
+    def _forward(self,
+                 X: np.ndarray,
+                 log_emissions: Optional[np.ndarray] = None,
+                 return_log: bool = False) -> Tuple[np.ndarray, float]:
         """
         Forward algorithm: compute filtering probabilities.
         
@@ -120,29 +225,37 @@ class GaussianHMM:
             Log-likelihood of observations
         """
         n_samples = len(X)
+        if log_emissions is None:
+            log_emissions = self._log_emission_probabilities(X)
+
         log_alpha = np.zeros((n_samples, self.n_regimes))
+        log_transition = np.log(self.transition_matrix + 1e-300)
         
         # Initialize
-        for k in range(self.n_regimes):
-            log_alpha[0, k] = (np.log(self.initial_probs[k] + 1e-10) +
-                              self._log_emission_prob(X[0], k))
+        log_alpha[0] = np.log(self.initial_probs + 1e-300) + log_emissions[0]
         
         # Forward recursion
         for t in range(1, n_samples):
-            for k in range(self.n_regimes):
-                log_trans = np.log(self.transition_matrix[:, k] + 1e-10)
-                log_alpha[t, k] = (logsumexp(log_alpha[t-1] + log_trans) +
-                                  self._log_emission_prob(X[t], k))
+            log_alpha[t] = (
+                log_emissions[t] +
+                _logsumexp(log_alpha[t - 1][:, np.newaxis] + log_transition, axis=0)
+            )
         
         # Log-likelihood
-        log_likelihood = logsumexp(log_alpha[-1])
+        log_likelihood = _logsumexp(log_alpha[-1])
         
         # Normalize to probabilities
-        alpha = np.exp(log_alpha - logsumexp(log_alpha, axis=1, keepdims=True))
+        alpha = np.exp(log_alpha - _logsumexp(log_alpha, axis=1, keepdims=True))
         
+        if return_log:
+            return alpha, log_likelihood, log_alpha
+
         return alpha, log_likelihood
     
-    def _backward(self, X: np.ndarray) -> np.ndarray:
+    def _backward(self,
+                  X: np.ndarray,
+                  log_emissions: Optional[np.ndarray] = None,
+                  return_log: bool = False) -> np.ndarray:
         """
         Backward algorithm: compute smoothing probabilities.
         
@@ -157,22 +270,28 @@ class GaussianHMM:
             Backward probabilities (n_samples, n_regimes)
         """
         n_samples = len(X)
+        if log_emissions is None:
+            log_emissions = self._log_emission_probabilities(X)
+
         log_beta = np.zeros((n_samples, self.n_regimes))
+        log_transition = np.log(self.transition_matrix + 1e-300)
         
         # Initialize (log(1) = 0)
         log_beta[-1, :] = 0
         
         # Backward recursion
         for t in range(n_samples - 2, -1, -1):
-            for k in range(self.n_regimes):
-                log_trans = np.log(self.transition_matrix[k, :] + 1e-10)
-                log_emit = np.array([self._log_emission_prob(X[t+1], j) 
-                                    for j in range(self.n_regimes)])
-                log_beta[t, k] = logsumexp(log_trans + log_emit + log_beta[t+1])
+            log_beta[t] = _logsumexp(
+                log_transition + log_emissions[t + 1][np.newaxis, :] + log_beta[t + 1][np.newaxis, :],
+                axis=1,
+            )
         
         # Normalize
-        beta = np.exp(log_beta - logsumexp(log_beta, axis=1, keepdims=True))
+        beta = np.exp(log_beta - _logsumexp(log_beta, axis=1, keepdims=True))
         
+        if return_log:
+            return beta, log_beta
+
         return beta
     
     def _log_emission_prob(self, x: np.ndarray, regime: int) -> float:
@@ -191,13 +310,31 @@ class GaussianHMM:
         float
             Log probability
         """
+        x = np.asarray(x, dtype=np.float64).reshape(-1)
         mean = self.means[regime]
-        cov = self.covariances[regime]
-        
+        cov = ensure_positive_definite(
+            self.covariances[regime],
+            epsilon=self._covariance_epsilon(),
+        )
+
+        if x.size == 1:
+            variance = max(float(cov[0, 0]), 1e-12)
+            diff = float(x[0] - mean[0])
+            return float(-0.5 * (np.log(2 * np.pi * variance) + (diff * diff) / variance))
+
         try:
-            return multivariate_normal.logpdf(x, mean=mean, cov=cov)
-        except:
-            return -1e10
+            sign, logdet = np.linalg.slogdet(cov)
+            if sign <= 0:
+                raise np.linalg.LinAlgError("Covariance is not positive definite")
+            inv_cov = np.linalg.inv(cov)
+        except np.linalg.LinAlgError:
+            cov = ensure_positive_definite(cov, epsilon=self._covariance_epsilon())
+            sign, logdet = np.linalg.slogdet(cov)
+            inv_cov = np.linalg.pinv(cov)
+
+        diff = x - mean
+        quadratic = float(diff.T @ inv_cov @ diff)
+        return float(-0.5 * (x.size * np.log(2 * np.pi) + logdet + quadratic))
     
     def _expectation_step(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float]:
         """
@@ -229,9 +366,14 @@ class GaussianHMM:
         """
         n_samples = len(X)
         
-        # Forward-backward
-        alpha, log_likelihood = self._forward(X)
-        beta = self._backward(X)
+        # Forward-backward in log space for numerical stability.
+        log_emissions = self._log_emission_probabilities(X)
+        alpha, log_likelihood, log_alpha = self._forward(
+            X, log_emissions=log_emissions, return_log=True
+        )
+        beta, log_beta = self._backward(
+            X, log_emissions=log_emissions, return_log=True
+        )
         
         # Validate forward-backward outputs
         if np.any(np.isnan(alpha)) or np.any(np.isinf(alpha)):
@@ -241,14 +383,9 @@ class GaussianHMM:
             raise RuntimeError("NaN/Inf detected in backward probabilities (beta)")
         
         # Gamma: P(s_t = k | y_{1:T})
-        gamma = alpha * beta
-        gamma_sum = gamma.sum(axis=1, keepdims=True)
-        
-        # Check for zero sums before normalization
-        if np.any(gamma_sum < 1e-300):
-            raise RuntimeError("Numerical underflow in gamma computation - probabilities too small")
-        
-        gamma = gamma / gamma_sum
+        log_gamma = log_alpha + log_beta
+        log_gamma = log_gamma - _logsumexp(log_gamma, axis=1, keepdims=True)
+        gamma = np.exp(log_gamma)
         
         # Validate gamma
         if np.any(np.isnan(gamma)) or np.any(np.isinf(gamma)):
@@ -261,26 +398,57 @@ class GaussianHMM:
         # Xi: P(s_t = i, s_{t+1} = j | y_{1:T})
         xi = np.zeros((n_samples - 1, self.n_regimes, self.n_regimes))
         
+        log_transition = np.log(self.transition_matrix + 1e-300)
         for t in range(n_samples - 1):
-            for i in range(self.n_regimes):
-                for j in range(self.n_regimes):
-                    xi[t, i, j] = (alpha[t, i] * 
-                                  self.transition_matrix[i, j] *
-                                  np.exp(self._log_emission_prob(X[t+1], j)) *
-                                  beta[t+1, j])
-            
-            xi_sum = xi[t].sum()
-            if xi_sum < 1e-300:
-                # Numerical underflow - use uniform distribution
-                xi[t] = 1.0 / (self.n_regimes * self.n_regimes)
-            else:
-                xi[t] = xi[t] / xi_sum
+            log_xi_t = (
+                log_alpha[t][:, np.newaxis] +
+                log_transition +
+                log_emissions[t + 1][np.newaxis, :] +
+                log_beta[t + 1][np.newaxis, :]
+            )
+            log_xi_t = log_xi_t - _logsumexp(log_xi_t)
+            xi[t] = np.exp(log_xi_t)
         
         # Validate xi
         if np.any(np.isnan(xi)) or np.any(np.isinf(xi)):
             raise RuntimeError("NaN/Inf detected in transition probabilities (xi)")
         
         return gamma, xi, log_likelihood
+
+    def regime_volatilities(self) -> np.ndarray:
+        """
+        Return per-regime emission volatility estimates.
+
+        For multivariate emissions, this uses the square root of average
+        marginal variance so that regimes can still be ranked by risk.
+        """
+        if self.covariances is None:
+            raise ValueError("Model must be initialized or fitted first")
+
+        vols = np.zeros(self.n_regimes, dtype=np.float64)
+        for k in range(self.n_regimes):
+            cov = np.asarray(self.covariances[k], dtype=np.float64)
+            if cov.ndim == 0:
+                variance = cov.item()
+            elif cov.ndim == 1:
+                variance = float(np.mean(cov))
+            else:
+                variance = float(np.trace(cov) / cov.shape[0])
+            vols[k] = np.sqrt(max(variance, 0.0))
+
+        return vols
+
+    def _sort_regimes_by_volatility(self) -> None:
+        """Relabel regimes so labels are stable and economically interpretable."""
+        order = np.argsort(self.regime_volatilities())
+
+        if np.array_equal(order, np.arange(self.n_regimes)):
+            return
+
+        self.initial_probs = self.initial_probs[order]
+        self.means = self.means[order]
+        self.covariances = self.covariances[order]
+        self.transition_matrix = self.transition_matrix[np.ix_(order, order)]
     
     def _maximization_step(self, X: np.ndarray, gamma: np.ndarray, xi: np.ndarray):
         """
@@ -362,7 +530,10 @@ class GaussianHMM:
                                   (diff[:, :, np.newaxis] @ diff[:, np.newaxis, :])).sum(axis=0) / gamma_sum
             
             # Enforce positive definiteness
-            self.covariances[k] = ensure_positive_definite(self.covariances[k], epsilon=1e-6)
+            self.covariances[k] = ensure_positive_definite(
+                self.covariances[k],
+                epsilon=self._covariance_epsilon(),
+            )
             
             # Validate covariance
             if np.any(np.isnan(self.covariances[k])) or np.any(np.isinf(self.covariances[k])):
@@ -408,8 +579,19 @@ class GaussianHMM:
         
         if len(X) < self.n_regimes * 10:
             raise ValueError(f"Insufficient data: {len(X)} samples for {self.n_regimes} regimes (need at least {self.n_regimes * 10})")
+
+        sample_cov = np.cov(X.T)
+        if X.shape[1] == 1:
+            sample_variance = float(np.asarray(sample_cov).reshape(-1)[0])
+            self._covariance_floor = max(self.min_covar, sample_variance * self.covariance_floor_ratio)
+        else:
+            sample_cov = ensure_positive_definite(sample_cov, epsilon=self.min_covar)
+            avg_variance = float(np.trace(sample_cov) / X.shape[1])
+            self._covariance_floor = max(self.min_covar, avg_variance * self.covariance_floor_ratio)
         
         # Initialize parameters
+        self.log_likelihoods = []
+        self.converged_ = False
         self._initialize_parameters(X)
         
         # EM iterations
@@ -436,6 +618,7 @@ class GaussianHMM:
                 
                 # Check convergence
                 if abs(log_likelihood - prev_log_likelihood) < self.tol:
+                    self.converged_ = True
                     print(f"Converged at iteration {iteration + 1}, log-likelihood: {log_likelihood:.2f}")
                     break
                 
@@ -449,11 +632,12 @@ class GaussianHMM:
             print(f"Warning: Max iterations ({self.n_iter}) reached without convergence")
             print(f"Final log-likelihood: {log_likelihood:.2f}")
         
+        self._sort_regimes_by_volatility()
         self.is_fitted = True
         
         return self
     
-    def predict_proba(self, X: np.ndarray, method: str = 'smoothed') -> np.ndarray:
+    def predict_proba(self, X: np.ndarray, method: str = 'filtered') -> np.ndarray:
         """
         Predict regime probabilities.
         
@@ -462,7 +646,8 @@ class GaussianHMM:
         X : np.ndarray
             Data (n_samples, n_features) or (n_samples,)
         method : str
-            'filtered' or 'smoothed'
+            'filtered' for causal trading probabilities or 'smoothed' for
+            offline diagnostics.
             
         Returns
         -------
@@ -477,11 +662,13 @@ class GaussianHMM:
         
         if method == 'filtered':
             probs, _ = self._forward(X)
-        else:  # smoothed
+        elif method == 'smoothed':
             alpha, _ = self._forward(X)
             beta = self._backward(X)
             probs = alpha * beta
             probs = probs / probs.sum(axis=1, keepdims=True)
+        else:
+            raise ValueError(f"Unknown probability method: {method}")
         
         return probs
     
@@ -550,8 +737,8 @@ class GaussianHMM:
         if not self.is_fitted:
             raise ValueError("Model must be fitted first")
         
-        regimes = self.predict(X)
         probs = self.predict_proba(X, method='smoothed')
+        regimes = np.argmax(probs, axis=1)
         
         stats = {
             'transition_matrix': self.transition_matrix,

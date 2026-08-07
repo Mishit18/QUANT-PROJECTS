@@ -53,35 +53,18 @@ def main(config):
     
     # 1. Load data
     print("\n[1/7] Loading market data...")
-    try:
-        data = load_market_data(
-            tickers=config['data']['tickers'],
-            start_date=config['data'].get('start_date'),
-            end_date=config['data'].get('end_date')
-        )
-        
-        # Extract primary ticker
-        primary_ticker = config['data']['tickers'][0]
-        if isinstance(data, dict):
-            returns = data['returns'][primary_ticker].values
-            prices = data['prices'][primary_ticker].values
-        else:
-            # Use sample data instead if format is problematic
-            raise ValueError("Data format issue, using sample data")
-            
-    except Exception as e:
-        print(f"Error loading data: {e}")
-        print("Using sample data instead...")
-        data = load_sample_data()
-        
-        # Handle synthetic data format
-        if 'returns' in data and 'prices' in data:
-            # Get first column from returns
-            returns = data['returns'].iloc[:, 0].values
-            prices = data['prices'].iloc[:, 0].values
-            primary_ticker = data['returns'].columns[0]
-        else:
-            raise ValueError("Invalid data format")
+    data = load_sample_data(
+        tickers=config['data']['tickers'],
+        start_date=config['data'].get('start_date'),
+        end_date=config['data'].get('end_date'),
+        period=config['data'].get('period', '5y'),
+        data_dir=config['data'].get('data_dir', 'data/raw'),
+        prefer_cache=config['data'].get('prefer_cache', True),
+    )
+
+    returns = data['returns'].iloc[:, 0].values
+    prices = data['prices'].iloc[:, 0].values
+    primary_ticker = data['returns'].columns[0]
     
     print(f"Loaded {len(returns)} observations")
     print(f"Mean return: {np.mean(returns):.4f}")
@@ -126,9 +109,10 @@ def main(config):
     hmm.fit(returns)
     
     regime_probs = hmm.predict_proba(returns, method='smoothed')
-    regimes = hmm.predict(returns)
+    regimes = np.argmax(regime_probs, axis=1)
     
-    print(f"Converged in {len(hmm.log_likelihoods)} iterations")
+    print(f"EM converged: {hmm.converged_}")
+    print(f"EM iterations: {len(hmm.log_likelihoods)}")
     
     # Regime statistics
     stats = hmm.get_regime_statistics(returns)
@@ -263,7 +247,16 @@ def main(config):
         comparison.to_csv(os.path.join(results_dir, 'strategy_comparison.csv'))
         
         # Save regime statistics
-        regime_stats_df = pd.DataFrame(stats['regime_statistics'])
+        regime_stats_df = pd.DataFrame([
+            {
+                'regime': k,
+                'mean': float(np.ravel(regime_stat['mean'])[0]) if regime_stat['count'] > 0 else np.nan,
+                'volatility': float(np.ravel(regime_stat['std'])[0]) if regime_stat['count'] > 0 else np.nan,
+                'count': regime_stat['count'],
+                'frequency': regime_stat['frequency'],
+            }
+            for k, regime_stat in enumerate(stats['regime_statistics'])
+        ])
         regime_stats_df.to_csv(os.path.join(results_dir, 'regime_statistics.csv'), index=False)
         
         print(f"\nResults saved to {results_dir}/")

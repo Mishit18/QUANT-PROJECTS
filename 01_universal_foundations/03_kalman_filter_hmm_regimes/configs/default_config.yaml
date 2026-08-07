@@ -3,8 +3,11 @@
 # Data settings
 data:
   tickers: ['SPY', 'QQQ', 'TLT']
-  start_date: '2015-01-01'
-  end_date: '2020-12-31'
+  start_date:
+  end_date:
+  period: '5y'
+  prefer_cache: true
+  data_dir: 'data/raw'
   frequency: 'daily'
 
 # Preprocessing

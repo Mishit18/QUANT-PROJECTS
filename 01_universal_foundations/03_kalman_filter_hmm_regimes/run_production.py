@@ -148,7 +148,14 @@ def load_and_validate_data(config: Dict[str, Any]) -> tuple:
         # Attempt to load real market data
         logging.info(f"Loading data for {config['data']['tickers']}...")
         
-        data = load_sample_data()  # Uses real data with 3 retry attempts
+        data = load_sample_data(
+            tickers=config['data']['tickers'],
+            start_date=config['data'].get('start_date'),
+            end_date=config['data'].get('end_date'),
+            period=config['data'].get('period', '5y'),
+            data_dir=config['data'].get('data_dir', 'data/raw'),
+            prefer_cache=config['data'].get('prefer_cache', True),
+        )  # Uses cached real data first, then live data with retries.
         
         # Validate data structure
         ProductionValidator.validate_data(data, "DATA_LOADING")
@@ -170,7 +177,7 @@ def load_and_validate_data(config: Dict[str, Any]) -> tuple:
         return returns, prices, primary_ticker
         
     except Exception as e:
-        logging.error(f"✗ Data loading failed: {e}")
+        logging.error(f"[ERROR] Data loading failed: {e}")
         raise RuntimeError(f"CRITICAL: Cannot proceed without real data. Error: {e}")
 
 
@@ -219,7 +226,7 @@ def fit_kalman_filter(returns: np.ndarray, config: Dict[str, Any]) -> KalmanFilt
         return kf
         
     except Exception as e:
-        logging.error(f"✗ Kalman filter failed: {e}")
+        logging.error(f"[ERROR] Kalman filter failed: {e}")
         raise RuntimeError(f"Kalman filter fitting failed: {e}")
 
 
@@ -251,7 +258,7 @@ def fit_hmm(returns: np.ndarray, config: Dict[str, Any]) -> GaussianHMM:
         
         # Get regime probabilities
         regime_probs = hmm.predict_proba(returns, method='smoothed')
-        regimes = hmm.predict(returns)
+        regimes = np.argmax(regime_probs, axis=1)
         
         # Validate outputs
         ProductionValidator.validate_array(regime_probs, "regime_probs", "HMM")
@@ -268,7 +275,8 @@ def fit_hmm(returns: np.ndarray, config: Dict[str, Any]) -> GaussianHMM:
         stats = hmm.get_regime_statistics(returns)
         
         logging.info(f"[OK] HMM fitted successfully")
-        logging.info(f"  Converged in {len(hmm.log_likelihoods)} iterations")
+        logging.info(f"  EM converged: {hmm.converged_}")
+        logging.info(f"  EM iterations: {len(hmm.log_likelihoods)}")
         logging.info(f"  Final log-likelihood: {hmm.log_likelihoods[-1]:.2f}")
         
         logging.info("\n  Regime Statistics:")
@@ -283,7 +291,7 @@ def fit_hmm(returns: np.ndarray, config: Dict[str, Any]) -> GaussianHMM:
         return hmm
         
     except Exception as e:
-        logging.error(f"✗ HMM fitting failed: {e}")
+        logging.error(f"[ERROR] HMM fitting failed: {e}")
         raise RuntimeError(f"HMM fitting failed: {e}")
 
 
@@ -358,7 +366,7 @@ def generate_signals(returns: np.ndarray, kf: KalmanFilter,
         return signals
         
     except Exception as e:
-        logging.error(f"✗ Signal generation failed: {e}")
+        logging.error(f"[ERROR] Signal generation failed: {e}")
         raise RuntimeError(f"Signal generation failed: {e}")
 
 
@@ -433,7 +441,7 @@ def run_backtest(signals: np.ndarray, returns: np.ndarray,
         return bt, strategies, comparison, results
         
     except Exception as e:
-        logging.error(f"✗ Backtesting failed: {e}")
+        logging.error(f"[ERROR] Backtesting failed: {e}")
         raise RuntimeError(f"Backtesting failed: {e}")
 
 
@@ -550,11 +558,21 @@ def save_results(results: Dict, comparison: pd.DataFrame,
         
         # Regime statistics
         stats = hmm.get_regime_statistics(returns)
-        regime_stats_df = pd.DataFrame(stats['regime_statistics'])
+        regime_stats_df = pd.DataFrame([
+            {
+                'regime': k,
+                'mean': float(np.ravel(regime_stat['mean'])[0]) if regime_stat['count'] > 0 else np.nan,
+                'volatility': float(np.ravel(regime_stat['std'])[0]) if regime_stat['count'] > 0 else np.nan,
+                'count': regime_stat['count'],
+                'frequency': regime_stat['frequency'],
+            }
+            for k, regime_stat in enumerate(stats['regime_statistics'])
+        ])
         regime_stats_df.to_csv(os.path.join(results_dir, 'regime_statistics.csv'), index=False)
         
         # Regime conditional performance
-        regimes = hmm.predict(returns)
+        regime_probs = hmm.predict_proba(returns, method='smoothed')
+        regimes = np.argmax(regime_probs, axis=1)
         regime_returns = []
         
         for k in range(config['hmm']['n_regimes']):
@@ -653,7 +671,7 @@ if __name__ == '__main__':
         sys.exit(0)
         
     except Exception as e:
-        logging.error(f"\n✗ FAILURE: {e}")
+        logging.error(f"\n[ERROR] FAILURE: {e}")
         logging.error("Pipeline terminated with errors")
         import traceback
         logging.error(traceback.format_exc())

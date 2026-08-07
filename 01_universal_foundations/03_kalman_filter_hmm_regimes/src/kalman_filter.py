@@ -232,7 +232,12 @@ class KalmanFilter:
             P_pred = self.predicted_covariances[t + 1]
             P_filt = self.filtered_covariances[t]
             
-            J = P_filt @ F.T @ np.linalg.inv(P_pred)
+            try:
+                P_pred_inv = np.linalg.inv(P_pred)
+            except np.linalg.LinAlgError:
+                P_pred_inv = np.linalg.pinv(P_pred)
+
+            J = P_filt @ F.T @ P_pred_inv
             
             # Smoothed estimates
             x_smooth_next = smoothed_states[t + 1]

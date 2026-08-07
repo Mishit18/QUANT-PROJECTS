@@ -456,7 +456,7 @@ bt = Backtest(signals, returns)
 ### What This System Provides
 - Research framework
 - Proof of concept
-- production-ready code
+- production-style code safeguards
 - Numerical stability
 - Failure mode handling
 

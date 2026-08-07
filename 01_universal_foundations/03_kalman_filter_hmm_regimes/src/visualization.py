@@ -17,6 +17,17 @@ plt.rcParams['figure.figsize'] = (12, 6)
 plt.rcParams['font.size'] = 10
 
 
+def _finish_plot(save_path: Optional[str] = None, dpi: int = 300) -> None:
+    """Save and display/close the current figure according to the backend."""
+    if save_path:
+        plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
+
+    if plt.get_backend().lower() == 'agg':
+        plt.close()
+    else:
+        plt.show()
+
+
 def plot_kalman_filter_results(observations: np.ndarray,
                                filtered_states: np.ndarray,
                                smoothed_states: Optional[np.ndarray] = None,
@@ -76,10 +87,7 @@ def plot_kalman_filter_results(observations: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_regime_probabilities(regime_probs: np.ndarray,
@@ -132,10 +140,7 @@ def plot_regime_probabilities(regime_probs: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_regime_labeled_series(data: np.ndarray,
@@ -179,10 +184,7 @@ def plot_regime_labeled_series(data: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_equity_curve(equity_curve: np.ndarray,
@@ -228,10 +230,7 @@ def plot_equity_curve(equity_curve: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_returns_distribution(returns: np.ndarray,
@@ -274,10 +273,7 @@ def plot_returns_distribution(returns: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_dynamic_beta(beta: np.ndarray,
@@ -326,10 +322,7 @@ def plot_dynamic_beta(beta: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_volatility_comparison(latent_vol: np.ndarray,
@@ -373,10 +366,7 @@ def plot_volatility_comparison(latent_vol: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_regime_transition_matrix(transition_matrix: np.ndarray,
@@ -409,10 +399,7 @@ def plot_regime_transition_matrix(transition_matrix: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_performance_comparison(strategies: dict,
@@ -444,10 +431,7 @@ def plot_performance_comparison(strategies: dict,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def plot_signals_and_positions(returns: np.ndarray,
@@ -504,10 +488,7 @@ def plot_signals_and_positions(returns: np.ndarray,
     
     plt.tight_layout()
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 def create_summary_dashboard(returns: np.ndarray,
@@ -577,10 +558,7 @@ def create_summary_dashboard(returns: np.ndarray,
     
     plt.suptitle('Strategy Performance Dashboard', fontsize=16, fontweight='bold', y=0.995)
     
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
-    plt.show()
+    _finish_plot(save_path)
 
 
 if __name__ == '__main__':

@@ -276,8 +276,8 @@ def combine_kalman_hmm_features(returns: np.ndarray,
     # Get filtered states
     filtered_states = kf.filtered_states
     
-    # Get regime probabilities
-    regime_probs = hmm.predict_proba(returns)
+    # Use filtered probabilities by default so generated features are causal.
+    regime_probs = hmm.predict_proba(returns, method='filtered')
     
     # Create feature engine
     engine = RegimeFeatureEngine(kf, hmm)

@@ -11,6 +11,7 @@ import yfinance as yf
 from typing import List, Union, Optional, Dict
 from datetime import datetime, timedelta
 import os
+from pathlib import Path
 
 
 class DataLoader:
@@ -91,15 +92,64 @@ class DataLoader:
         pd.DataFrame
             Loaded data
         """
-        data = pd.read_csv(filepath, index_col=0, parse_dates=True)
+        try:
+            data = pd.read_csv(filepath, header=[0, 1], index_col=0, parse_dates=True)
+        except Exception:
+            data = pd.read_csv(filepath, index_col=0, parse_dates=True)
         
         # Reconstruct MultiIndex if present
-        if '.' in data.columns[0]:
+        if not isinstance(data.columns, pd.MultiIndex) and '.' in data.columns[0]:
             data.columns = pd.MultiIndex.from_tuples(
                 [tuple(col.split('.')) for col in data.columns]
             )
         
         return data
+
+    def load_latest_cached_yahoo(self,
+                                 tickers: Union[str, List[str]],
+                                 start_date: Optional[str] = None,
+                                 end_date: Optional[str] = None) -> pd.DataFrame:
+        """
+        Load the latest cached Yahoo Finance CSV for a ticker set.
+
+        This keeps research runs reproducible and avoids unnecessary network
+        dependence while still using real downloaded market data.
+        """
+        if isinstance(tickers, str):
+            tickers = [tickers]
+
+        ticker_key = '_'.join(tickers)
+        candidates = sorted(
+            Path(self.data_dir).glob(f"{ticker_key}_*.csv"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+
+        if not candidates:
+            raise FileNotFoundError(f"No cached Yahoo data found for {ticker_key}")
+
+        last_error = None
+        for path in candidates:
+            try:
+                data = self.load_from_csv(str(path))
+                if data.empty:
+                    raise ValueError("Cached data file is empty")
+
+                if start_date is not None:
+                    data = data.loc[data.index >= pd.Timestamp(start_date)]
+                if end_date is not None:
+                    data = data.loc[data.index <= pd.Timestamp(end_date)]
+
+                if data.empty:
+                    raise ValueError("Cached data has no rows after date filtering")
+
+                print(f"Loaded cached market data from {path}")
+                return data
+            except Exception as exc:
+                last_error = exc
+                continue
+
+        raise RuntimeError(f"Failed to load cached Yahoo data for {ticker_key}: {last_error}")
     
     def get_price_series(self, data: pd.DataFrame, ticker: str, 
                         field: str = 'Close') -> pd.Series:
@@ -174,7 +224,36 @@ def load_market_data(tickers: Union[str, List[str]],
     return loader.download_yahoo(tickers, start_date, end_date, period)
 
 
-def load_sample_data() -> Dict[str, pd.DataFrame]:
+def _extract_close_prices(data: pd.DataFrame, tickers: List[str]) -> pd.DataFrame:
+    """
+    Extract adjusted close prices from yfinance's possible column layouts.
+    """
+    prices = pd.DataFrame(index=data.index)
+
+    if isinstance(data.columns, pd.MultiIndex):
+        for ticker in tickers:
+            if (ticker, 'Close') in data.columns:
+                series = data[(ticker, 'Close')]
+            elif ('Close', ticker) in data.columns:
+                series = data[('Close', ticker)]
+            else:
+                continue
+
+            if len(series.dropna()) > 0:
+                prices[ticker] = series
+    else:
+        if 'Close' in data.columns and len(tickers) == 1:
+            prices[tickers[0]] = data['Close']
+
+    return prices.dropna(how='all')
+
+
+def load_sample_data(tickers: Optional[List[str]] = None,
+                     start_date: Optional[str] = None,
+                     end_date: Optional[str] = None,
+                     period: str = '5y',
+                     data_dir: str = 'data/raw',
+                     prefer_cache: bool = True) -> Dict[str, pd.DataFrame]:
     """
     Load REAL market data with robust error handling.
     
@@ -191,44 +270,34 @@ def load_sample_data() -> Dict[str, pd.DataFrame]:
     RuntimeError
         If real market data cannot be loaded after all attempts
     """
-    tickers = ['SPY', 'QQQ', 'TLT']
-    loader = DataLoader()
+    tickers = tickers or ['SPY', 'QQQ', 'TLT']
+    loader = DataLoader(data_dir=data_dir)
     
-    # Attempt 1: Recent 5 years
+    # Attempt 1: latest cached real data, then live download retries.
     for attempt in range(3):
         try:
-            print(f"Attempt {attempt + 1}/3: Downloading {tickers}...")
-            data = loader.download_yahoo(tickers, period='5y')
+            if attempt == 0 and prefer_cache:
+                print(f"Attempt {attempt + 1}/3: Loading cached data for {tickers}...")
+                data = loader.load_latest_cached_yahoo(
+                    tickers,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            else:
+                print(f"Attempt {attempt + 1}/3: Downloading {tickers}...")
+                data = loader.download_yahoo(
+                    tickers,
+                    start_date=start_date,
+                    end_date=end_date,
+                    period=period,
+                )
             
             # Validate data structure
             if data is None or data.empty:
                 raise ValueError("Empty data returned")
             
             # Extract prices with robust handling
-            prices = pd.DataFrame()
-            
-            # Handle yfinance's inconsistent return formats
-            if isinstance(data.columns, pd.MultiIndex):
-                # Multi-ticker format: (Ticker, Field)
-                for ticker in tickers:
-                    try:
-                        # Try standard format
-                        if (ticker, 'Close') in data.columns:
-                            series = data[(ticker, 'Close')].dropna()
-                        elif ('Close', ticker) in data.columns:
-                            series = data[('Close', ticker)].dropna()
-                        else:
-                            continue
-                        
-                        if len(series) > 0:
-                            prices[ticker] = series
-                    except Exception as e:
-                        print(f"  Warning: Could not extract {ticker}: {e}")
-                        continue
-            else:
-                # Single ticker or flat format
-                if 'Close' in data.columns:
-                    prices[tickers[0]] = data['Close'].dropna()
+            prices = _extract_close_prices(data, tickers)
             
             # Validate we got usable data
             if prices.empty:
@@ -252,7 +321,7 @@ def load_sample_data() -> Dict[str, pd.DataFrame]:
             if (returns.abs() > 0.5).any().any():
                 raise ValueError("Extreme returns detected (>50% single day)")
             
-            print(f"✓ Successfully loaded {len(prices)} days of data for {list(prices.columns)}")
+            print(f"[OK] Successfully loaded {len(prices)} days of data for {list(prices.columns)}")
             
             return {
                 'prices': prices,

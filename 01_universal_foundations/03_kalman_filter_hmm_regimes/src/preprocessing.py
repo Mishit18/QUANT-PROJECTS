@@ -109,11 +109,11 @@ class DataPreprocessor:
     def _handle_missing_values(self, data: pd.DataFrame) -> pd.DataFrame:
         """Handle missing values according to specified method."""
         if self.handle_missing == 'forward_fill':
-            return data.fillna(method='ffill').fillna(method='bfill')
+            return data.ffill().bfill()
         elif self.handle_missing == 'drop':
             return data.dropna()
         elif self.handle_missing == 'interpolate':
-            return data.interpolate(method='linear').fillna(method='bfill')
+            return data.interpolate(method='linear').bfill()
         else:
             return data
     

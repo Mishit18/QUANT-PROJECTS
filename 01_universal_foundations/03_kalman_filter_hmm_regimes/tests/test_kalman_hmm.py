@@ -126,6 +126,7 @@ class TestHMM(unittest.TestCase):
         self.assertEqual(hmm.transition_matrix.shape, (3, 3))
         self.assertEqual(hmm.means.shape, (3, 1))
         self.assertEqual(hmm.covariances.shape, (3, 1, 1))
+        self.assertTrue(np.all(np.diff(hmm.regime_volatilities()) >= 0))
     
     def test_regime_probabilities(self):
         """Test regime probability inference."""
@@ -133,8 +134,10 @@ class TestHMM(unittest.TestCase):
         hmm.fit(self.returns)
         
         probs = hmm.predict_proba(self.returns)
+        filtered_probs = hmm.predict_proba(self.returns, method='filtered')
         
         self.assertEqual(probs.shape, (len(self.returns), 3))
+        self.assertTrue(np.allclose(probs, filtered_probs))
         self.assertTrue(np.all(probs >= 0))
         self.assertTrue(np.all(probs <= 1))
         self.assertTrue(np.allclose(probs.sum(axis=1), 1.0))
