@@ -71,12 +71,16 @@ def stress_test(env, strategies: dict, num_episodes: int = 100, scenario_name: s
         
         for _ in tqdm(range(num_episodes)):
             state, _ = env.reset()
-            strategy.reset()
+            if hasattr(strategy, 'reset'):
+                strategy.reset()
             done = False
             
             try:
                 while not done:
-                    action = strategy.select_action(state)
+                    if hasattr(strategy, 'select_action'):
+                        action = strategy.select_action(state)
+                    else:
+                        action = np.array([strategy.get_action(state)])
                     next_state, reward, terminated, truncated, info = env.step(action)
                     done = terminated or truncated
                     state = next_state

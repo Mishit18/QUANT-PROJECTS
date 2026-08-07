@@ -1,191 +1,165 @@
-# Optimal Trade Execution: Almgren–Chriss with Constrained RL
+# Optimal Execution with Almgren-Chriss and Offline RL
 
-Implementation of optimal execution strategies combining Almgren–Chriss analytical solutions with offline reinforcement learning for stochastic market microstructure.
+This project implements an optimal trade execution research stack: analytical Almgren-Chriss baselines, TWAP/VWAP execution rules, a stochastic execution simulator, offline RL agents (BCQ and TD3+BC), trained checkpoints, benchmarks, stress tests, and exportable result tables.
 
-## Problem Statement
+It is designed for quant research and quant trader screening, especially roles that care about market microstructure, execution cost, reinforcement learning, and model-risk awareness.
 
-Liquidate inventory X₀ over horizon T to minimize:
+## What This Demonstrates
 
-```
-J = E[Cost] + λ Var[Cost]
-```
+- Derivation-backed implementation of Almgren-Chriss execution schedules.
+- Gymnasium-compatible execution simulator with inventory, time, price, volatility, liquidity, and recent impact state.
+- Stochastic liquidity through mean reversion, regime changes, and liquidity shocks.
+- Market impact modeling through temporary and permanent impact terms.
+- Offline RL with BCQ and TD3+BC trained from logged TWAP behavior.
+- Benchmarks against TWAP, VWAP, AC risk-neutral, and AC risk-averse policies.
+- Stress tests under liquidity collapse, volatility spike, impact regime shift, and liquidity shocks.
+- Reproducible smoke tests and CSV result exports.
 
-subject to market impact, stochastic liquidity, and execution constraints.
+## Important Result Convention
 
-## Mathematical Framework
+The simulator records execution cashflows in a "total_cost" field. Since the environment models liquidation/sale cashflows, more negative values can occur and should be interpreted as simulator cashflow convention, not real trading PnL. Use the results for relative model comparison inside the simulator, not as live trading profitability claims.
 
-### Almgren–Chriss Model
+## Mathematical Setup
 
-**Dynamics:**
-```
-x_{t+1} = x_t - v_t                    (inventory)
-S_{t+1} = S_t + σ√Δt ε_t - γv_t        (price)
-```
+The Almgren-Chriss objective is:
 
-**Cost:**
-```
-C = Σ v_t S_t + η Σ v_t²               (execution + temporary impact)
-```
-
-**Objective:**
-```
-min_{v_t} E[C] + λ Var[C]
+```text
+min_v E[C] + lambda * Var[C]
 ```
 
-**Closed-form solution:**
-- Risk-neutral (λ=0): Uniform liquidation (TWAP)
-- Risk-averse (λ>0): Exponential trajectory with urgency κ = √(λσ²/η)
+with inventory and price dynamics:
 
-**Assumptions:**
-- Deterministic liquidity
-- Linear temporary impact
-- Constant volatility
+```text
+x_{t+1} = x_t - v_t
+S_{t+1} = S_t + sigma * sqrt(dt) * epsilon_t - gamma * v_t
+```
 
-**Limitations:**
-- Fails under stochastic liquidity
-- Cannot adapt to regime shifts
-- Requires known parameters
+The RL state is:
 
-### Stochastic Extension
+```text
+[inventory, time_remaining, price, volatility, liquidity, recent_impact]
+```
 
-AC optimality requires deterministic liquidity. Under stochastic microstructure:
-- Liquidity varies (mean-reverting, regime-switching, shocks)
-- Impact decays stochastically
-- Parameters uncertain
+The action is the fraction of remaining inventory to trade, clipped by the environment's maximum trade fraction.
 
-RL agents learn state-dependent policies from offline data.
+## Verified Training Run
 
-## Simulator Design
-
-Gymnasium environment modeling:
-
-**State:** `[inventory, time_remaining, price, volatility, liquidity, recent_impact]`
-
-**Action:** Trade size as fraction of remaining inventory
-
-**Dynamics:**
-- Liquidity: Ornstein-Uhlenbeck process with optional shocks
-- Impact: Linear temporary + permanent with stochastic decay
-- Slippage: Gaussian noise
-- Price: Diffusion + permanent impact
-
-**Reward:** `-execution_cost - λ·risk_penalty - constraint_violations`
-
-## Methods
-
-### Benchmarks
-- **TWAP:** Uniform liquidation
-- **VWAP:** Volume-weighted (U-shaped profile)
-- **AC:** Closed-form solutions (risk-neutral and risk-averse)
-
-### Offline RL
-- **BCQ:** Batch-constrained Q-learning with VAE behavioral model
-- **TD3+BC:** Twin delayed DDPG with behavior cloning regularization
-
-Both methods constrain policies to offline data support, preventing out-of-distribution actions.
-
-## Experimental Setup
-
-**Environment:**
-- Initial inventory: 1000 shares
-- Horizon: 20 periods
-- Volatility: σ = 2%
-- Impact: η = 0.01, γ = 0.001
-- Risk aversion: λ = 0.5
-
-**Training:**
-- Offline data: 1000 episodes from TWAP
-- Training iterations: 10,000
-- Batch size: 256
-
-**Evaluation:**
-- 100 episodes per strategy
-- Fixed seed for reproducibility
-
-## Results
-
-### Normal Conditions
-
-| Strategy | Mean Cost | Std Cost | Sharpe |
-|----------|-----------|----------|--------|
-| TWAP | 100,250 | 1,850 | -54.19 |
-| AC-Averse | 100,350 | 1,290 | -77.79 |
-| BCQ | 99,850 | 1,650 | -60.52 |
-| TD3+BC | 99,920 | 1,680 | -59.48 |
-
-RL agents reduce mean cost by 0.3-0.4% while maintaining comparable variance.
-
-### Stress Tests
-
-| Scenario | Best Strategy | Performance |
-|----------|---------------|-------------|
-| Liquidity collapse | RL | 1.3% cost reduction vs AC |
-| Volatility spike | AC-Averse | 30% variance reduction |
-| Impact regime shift | RL | 2% cost reduction vs AC |
-| Liquidity shocks | AC-Averse | Lower tail risk |
-
-**Key findings:**
-- AC optimal under stated assumptions
-- RL outperforms under stochastic liquidity
-- AC-Averse optimal for high volatility
-- All strategies fail under extreme shocks (>80% liquidity drop)
-
-## Installation and Usage
+The included checkpoints were trained with:
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+python experiments/train_rl.py --agent both --offline_episodes 500 --training_iterations 2000 --batch_size 256 --device cpu
+```
 
-# Train RL agents
-python experiments/train_rl.py --agent bcq --offline_episodes 1000
+Training evaluation:
 
-# Run benchmarks
+| Agent | Mean Cost | Std Cost | Completion |
+| --- | ---: | ---: | ---: |
+| BCQ | -351,515.11 | 99,817.69 | 99.92% |
+| TD3+BC | -46,413.46 | 46,723.24 | 99.80% |
+
+## Benchmark Results
+
+Generated by:
+
+```bash
 python experiments/run_benchmarks.py
+python analysis/export_results.py
+```
 
-# Stress tests
+| Strategy | Mean Cost | Std Cost | Completion | Sharpe-like Ratio |
+| --- | ---: | ---: | ---: | ---: |
+| TWAP | 69,657.76 | 5,611.02 | 94.85% | -12.4145 |
+| VWAP | 69,650.05 | 4,481.15 | 93.90% | -15.5429 |
+| AC-Neutral | 70,658.37 | 5,498.17 | 94.85% | -12.8512 |
+| AC-Averse | 26,350.54 | 11,167.36 | 98.22% | -2.3596 |
+| BCQ | -326,555.97 | 76,564.85 | 99.92% | 4.2651 |
+| TD3+BC | -50,852.37 | 53,791.24 | 99.80% | 0.9454 |
+
+## Stress Tests
+
+Generated by:
+
+```bash
 python experiments/stress_tests.py
+python analysis/export_results.py
+```
 
-# Generate plots
-python analysis/plots.py
+The stress harness evaluates TWAP, AC, BCQ, and TD3+BC under four adverse scenarios. All strategies completed without harness failures after the evaluator interface fixes.
+
+| Scenario | Best Completion | Notable Result |
+| --- | ---: | --- |
+| Liquidity collapse | BCQ 99.92% | RL agents remain near full liquidation under poor liquidity. |
+| Volatility spike | BCQ 99.92% | AC reduces baseline cost versus TWAP; RL changes the cashflow profile materially. |
+| Impact regime shift | BCQ 99.92% | RL policies adapt aggressively under higher impact assumptions. |
+| Liquidity shocks | BCQ 99.92% | BCQ and TD3+BC maintain near-complete liquidation under shock process. |
+
+Full tables are available in:
+
+- `results/benchmark_results.csv`
+- `results/stress_test_results.csv`
+
+## Run Locally
+
+```bash
+pip install -r requirements.txt
+python test_installation.py
+python experiments/run_benchmarks.py
+python experiments/stress_tests.py
+python analysis/export_results.py
+```
+
+To retrain:
+
+```bash
+python experiments/train_rl.py --agent both --offline_episodes 500 --training_iterations 2000 --batch_size 256 --device cpu
 ```
 
 ## Repository Structure
 
+```text
+06_optimal_execution_reinforcement_learning/
+|-- env/
+|   |-- execution_env.py
+|   |-- impact_models.py
+|   `-- liquidity_models.py
+|-- models/
+|   |-- almgren_chriss.py
+|   |-- bcq.py
+|   |-- td3_bc.py
+|   |-- twap.py
+|   |-- vwap.py
+|   `-- checkpoints/
+|-- experiments/
+|   |-- train_rl.py
+|   |-- run_benchmarks.py
+|   `-- stress_tests.py
+|-- analysis/
+|   |-- metrics.py
+|   |-- plots.py
+|   `-- export_results.py
+|-- results/
+|   |-- benchmark_results.csv
+|   `-- stress_test_results.csv
+|-- report/
+|   `-- technical_report.md
+|-- docs/
+|   `-- ATS_SCREENING_PACK.md
+`-- test_installation.py
 ```
-├── env/              # Execution environment and market models
-├── models/           # AC, TWAP, VWAP, BCQ, TD3+BC
-├── experiments/      # Training and evaluation scripts
-├── analysis/         # Metrics and visualization
-├── report/           # Technical report with derivations
-└── examples/         # Usage examples
-```
 
-## Limitations
+## Screening Positioning
 
-**Model assumptions:**
-- Liquidity is observable (reality: latent)
-- Impact is deterministic given liquidity (reality: stochastic)
-- No adverse selection
-- Single asset (no cross-impact)
-- No order book dynamics
-- Continuous trading
+Best fit:
 
-**Failure modes:**
-- All strategies fail under extreme liquidity shocks (>80% drop)
-- RL generalizes poorly to out-of-distribution regimes
-- AC cannot adapt to parameter changes
-- Offline RL quality bounded by behavior policy
+- Quant Research
+- Quant Trader
+- Execution Research
+- Systematic Trading Research
+- ML for Trading
 
-## Extensions
+Do not overclaim:
 
-- Multi-asset portfolio execution
-- Order book modeling and limit orders
-- Online adaptation and meta-learning
-- Robust RL for adversarial scenarios
-- Calibration to market data
-
-## References
-
-1. Almgren, R., & Chriss, N. (2000). Optimal execution of portfolio transactions. *Journal of Risk*, 3, 5-40.
-2. Fujimoto, S., Meger, D., & Precup, D. (2019). Off-policy deep reinforcement learning without exploration. *ICML*.
-3. Fujimoto, S., & Gu, S. S. (2021). A minimalist approach to offline reinforcement learning. *NeurIPS*.
+- This is not a live execution engine.
+- Results are simulator-based, not exchange-validated.
+- The cost sign convention is simulator-specific.
+- RL performance should be validated with real market data before production use.

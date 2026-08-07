@@ -177,7 +177,7 @@ class TD3_BC:
     
     def load(self, filename: str):
         """Load model."""
-        checkpoint = torch.load(filename)
+        checkpoint = torch.load(filename, map_location=self.device, weights_only=True)
         self.actor.load_state_dict(checkpoint['actor'])
         self.critic.load_state_dict(checkpoint['critic'])
         self.actor_target.load_state_dict(checkpoint['actor_target'])

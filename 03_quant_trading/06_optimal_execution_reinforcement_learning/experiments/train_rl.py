@@ -61,7 +61,8 @@ def evaluate_policy(env, agent, num_episodes: int = 100) -> dict:
         
         while not done:
             action = agent.select_action(state)
-            next_state, reward, terminated, truncated, info = env.step(np.array([action]))
+            action = np.asarray(action, dtype=np.float32).reshape(-1)
+            next_state, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
             episode_cost += -reward
             state = next_state

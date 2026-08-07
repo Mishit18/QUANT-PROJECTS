@@ -69,7 +69,8 @@ def evaluate_strategy(env, strategy, num_episodes: int = 100, name: str = "Strat
     
     for _ in tqdm(range(num_episodes)):
         state, _ = env.reset()
-        strategy.reset()
+        if hasattr(strategy, 'reset'):
+            strategy.reset()
         done = False
         
         while not done:

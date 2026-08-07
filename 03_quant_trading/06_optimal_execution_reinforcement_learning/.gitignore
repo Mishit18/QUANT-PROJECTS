@@ -43,6 +43,10 @@ models/checkpoints/
 *.npz
 *.pt
 *.pth
+!results/
+!results/*.csv
+!models/checkpoints/
+!models/checkpoints/*.pt
 
 # Plots
 *.png
