@@ -121,7 +121,7 @@ class RegimeFilter:
         features['spread_abs'] = spread.abs()
         features['spread_change'] = spread.diff().abs()
         
-        features = features.fillna(method='bfill').fillna(method='ffill')
+        features = features.bfill().ffill()
         
         X = self.scaler.transform(features.values)
         states = self.model.predict(X)
@@ -163,7 +163,7 @@ class RegimeFilter:
         features['spread_abs'] = spread.abs()
         features['spread_change'] = spread.diff().abs()
         
-        features = features.fillna(method='bfill').fillna(method='ffill')
+        features = features.bfill().ffill()
         
         X = self.scaler.transform(features.values)
         states = self.model.predict(X)
@@ -194,7 +194,7 @@ class RegimeFilter:
         features['spread_vol'] = spread.pct_change().rolling(20).std()
         features['spread_abs'] = spread.abs()
         features['spread_change'] = spread.diff().abs()
-        features = features.fillna(method='bfill').fillna(method='ffill')
+        features = features.bfill().ffill()
         
         X = self.scaler.transform(features.values)
         states = self.model.predict(X)

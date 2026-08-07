@@ -19,6 +19,7 @@ import yaml
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import sys
 
 from src.config_validator import validate_config
 from src.universe_selection import UniverseSelector
@@ -122,7 +123,7 @@ def main():
             kf_results['beta']
         )
         
-        print(f"  Kalman hedge ratio: {kf_results['beta'].mean():.4f} ± {kf_results['beta'].std():.4f}")
+        print(f"  Kalman hedge ratio: {kf_results['beta'].mean():.4f} +/- {kf_results['beta'].std():.4f}")
         
         # OU model
         ou_model = SpreadModel(
@@ -133,7 +134,7 @@ def main():
         
         ou_params = ou_model.fit(spread)
         
-        print(f"  OU: theta={ou_params['theta']:.4f}, HL={ou_params['half_life']:.1f}d, R²={ou_params['r_squared']:.3f}")
+        print(f"  OU: theta={ou_params['theta']:.4f}, HL={ou_params['half_life']:.1f}d, R^2={ou_params['r_squared']:.3f}")
         print(f"  Valid: {ou_params['is_valid']}, Position multiplier: {ou_model.position_size_multiplier():.2f}x")
         
         if not ou_params['is_valid']:
@@ -332,3 +333,5 @@ if __name__ == "__main__":
         print(f"\n[ERROR] Execution failed: {e}")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
+
