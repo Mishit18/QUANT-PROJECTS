@@ -32,7 +32,7 @@ def run_regime_sweeps():
     print("NOTE: This shows WHERE the model BREAKS, not optimization")
     
     # Volatility sweep
-    print("\n1. Volatility sweep (showing failure at high σ)...")
+    print("\n1. Volatility sweep (showing failure at high sigma)...")
     vol_results = sweep_volatility(config)
     
     # Arrival rate sweep
@@ -166,7 +166,7 @@ def run_regime_sweeps():
     
     print(f"Table saved to {table_dir}/regime_analysis.txt")
     print("\nKey insights:")
-    print("- Model BREAKS at high volatility (σ > 0.05)")
+    print("- Model BREAKS at high volatility (sigma > 0.05)")
     print("- Model BREAKS at low arrival rate (A < 5)")
     print("- These are fundamental limitations, not bugs")
 

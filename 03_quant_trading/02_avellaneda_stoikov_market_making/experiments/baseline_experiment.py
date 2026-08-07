@@ -3,7 +3,7 @@ Baseline Experiment: Single-Agent Market Making with Monte Carlo
 
 Demonstrates core Avellaneda-Stoikov model with statistical rigor:
 - 500 Monte Carlo paths
-- Mean ± confidence bands
+- Mean +/- confidence bands
 - Distribution of PnL, Sharpe, inventory variance
 """
 
@@ -31,8 +31,8 @@ def run_baseline():
     
     print("Running baseline Avellaneda-Stoikov with Monte Carlo...")
     print(f"  Monte Carlo paths: {n_mc}")
-    print(f"  Risk aversion (γ): {config['market_maker']['risk_aversion']}")
-    print(f"  Volatility (σ): {config['market']['volatility']}")
+    print(f"  Risk aversion (gamma): {config['market_maker']['risk_aversion']}")
+    print(f"  Volatility (sigma): {config['market']['volatility']}")
     print(f"  Arrival rate (A): {config['order_flow']['arrival_rate']}")
     
     # Run Monte Carlo
@@ -40,10 +40,10 @@ def run_baseline():
     
     # Print statistics
     print(f"\nMonte Carlo Results (n={n_mc}):")
-    print(f"  PnL:         ${mc_results['pnl_mean']:.2f} ± ${mc_results['pnl_std']:.2f}")
-    print(f"  Sharpe:      {mc_results['sharpe_mean']:.3f} ± {mc_results['sharpe_std']:.3f}")
-    print(f"  Inv Std:     {mc_results['inv_std_mean']:.2f} ± {mc_results['inv_std_std']:.2f}")
-    print(f"  Total Fills: {mc_results['fills_mean']:.1f} ± {mc_results['fills_std']:.1f}")
+    print(f"  PnL:         ${mc_results['pnl_mean']:.2f} +/- ${mc_results['pnl_std']:.2f}")
+    print(f"  Sharpe:      {mc_results['sharpe_mean']:.3f} +/- {mc_results['sharpe_std']:.3f}")
+    print(f"  Inv Std:     {mc_results['inv_std_mean']:.2f} +/- {mc_results['inv_std_std']:.2f}")
+    print(f"  Total Fills: {mc_results['fills_mean']:.1f} +/- {mc_results['fills_std']:.1f}")
     
     # Generate plots
     fig_dir = Path(config['output']['figures_dir'])

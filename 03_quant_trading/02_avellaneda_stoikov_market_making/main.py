@@ -77,16 +77,16 @@ Available experiments:
             print(f"{'='*70}\n")
             try:
                 func()
-                print(f"\n✓ {name} completed successfully")
+                print(f"\n[OK] {name} completed successfully")
             except Exception as e:
-                print(f"\n✗ {name} failed: {e}")
+                print(f"\n[FAILED] {name} failed: {e}")
                 import traceback
                 traceback.print_exc()
     else:
         desc, func = EXPERIMENTS[args.experiment]
         print(f"Running: {desc}\n")
         func()
-        print(f"\n✓ Experiment completed successfully")
+        print("\n[OK] Experiment completed successfully")
     
     print("\n" + "="*70)
     print("Results saved to:")

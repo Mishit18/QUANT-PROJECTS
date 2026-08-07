@@ -46,10 +46,10 @@ def run_competition_analysis():
         pnl_mean = mc_results['agent_pnl_means'][i]
         pnl_std = mc_results['agent_pnl_stds'][i]
         fills_mean = mc_results['agent_fills_means'][i]
-        print(f"  {name}: PnL ${pnl_mean:.2f} ± ${pnl_std:.2f}, Fills {fills_mean:.1f}")
+        print(f"  {name}: PnL ${pnl_mean:.2f} +/- ${pnl_std:.2f}, Fills {fills_mean:.1f}")
     
     print(f"\nMarket Statistics:")
-    print(f"  Avg Spread: ${mc_results['spread_mean']:.4f} ± ${mc_results['spread_std']:.4f}")
+    print(f"  Avg Spread: ${mc_results['spread_mean']:.4f} +/- ${mc_results['spread_std']:.4f}")
     
     # Generate plots
     fig_dir = Path(config['output']['figures_dir'])

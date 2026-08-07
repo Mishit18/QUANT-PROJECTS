@@ -1,375 +1,196 @@
-﻿# vellaneda-Stoikov Market Making: Production Research System
+# Avellaneda-Stoikov Market Making
 
-**lean, theoretically grounded market-making framework with realistic microstructure extensions and honest failure analysis.**
+Interview-grade implementation of the Avellaneda-Stoikov optimal market-making model with Monte Carlo validation, self-financing PnL accounting, multi-agent competition, queue-position analysis, and explicit failure-mode documentation.
 
----
+## Executive Snapshot
 
-## Overview
+| Area | Result |
+|---|---:|
+| Core model | Avellaneda-Stoikov inventory-aware optimal quoting |
+| Validation style | Monte Carlo distributions, not single-path cherry-picking |
+| PnL identity | Self-financing accounting verified |
+| PnL attribution | Spread capture, inventory PnL, adverse selection, residual |
+| Default baseline Sharpe | 0.025 mean across 500 Monte Carlo paths |
+| Default baseline PnL | $4.07 +/- $1.62 across 500 Monte Carlo paths |
+| Microprice effect | Reported as an experimental microstructure comparison, not a live edge |
+| Queue effect | Fill probability decays from front-of-queue to deeper queue positions |
+| Main failure regimes | High volatility, low arrival intensity, toxic flow, excessive competition |
 
-This is an interview-grade implementation of the vellaneda-Stoikov optimal market-making model with:
-- **Monte arlo statistical rigor** (+ paths)
-- **Self-financing PnL accounting** (verified)
-- **Multi-agent competition** (proper order allocation)
-- **Regime analysis** (showing where model breaks)
-- **No overfitting** (all parameters fixed)
+## What This Project Demonstrates
 
-### What This System oes
-
- erives optimal quotes from HJ equation  
- Manages inventory risk via asymmetric spreads  
- ecomposes PnL into spread/inventory/adverse selection  
- Shows competition-driven spread compression  
- Identifies failure regimes (high σ, low )  
- Provides Monte arlo distributions (not single paths)  
-
-### What This System oes NOT o
-
- Optimize parameters for PnL  
- Use machine learning or RL  
- laim to work in all regimes  
- Hide model limitations  
- Overfit to noise  
-
----
+- Derivation and implementation of reservation price and optimal bid/ask quotes.
+- Inventory-risk control through asymmetric quoting.
+- PnL decomposition into spread capture, inventory PnL, adverse selection, and residual attribution.
+- Monte Carlo experiment design for market-making strategies.
+- Multi-agent competition and spread compression.
+- Queue-position and microprice extensions for more realistic microstructure discussion.
+- Failure-mode analysis that explains when the model should not be trusted.
 
 ## Quick Start
 
-### Installation
 ```bash
 pip install -r requirements.txt
+python main.py baseline
 ```
 
-### Run ll Experiments (One ommand)
+Run all experiments:
+
 ```bash
 python main.py all
 ```
 
-This generates:
-- ** figures** in `results/figures/`
-- ** tables** in `results/tables/`
-- **Statistical distributions** (not single paths)
+Run individual experiments:
 
-### Run Individual Experiments
 ```bash
-python main.py baseline           # Monte arlo baseline ( paths)
-python main.py pnl_decomposition  # Self-financing accounting
-python main.py competition        # Multi-agent with M
-python main.py regime_sweep       # Where model breaks
-python main.py microprice         # Microstructure comparison
-python main.py queue              # Queue position analysis
+python main.py baseline
+python main.py pnl_decomposition
+python main.py competition
+python main.py regime_sweep
+python main.py microprice
+python main.py queue
 ```
 
----
+Generated artifacts are written to:
 
-## What Works
+- `results/figures/`
+- `results/tables/`
 
-### . ore vellaneda-Stoikov Model 
+## Core Model
 
-**losed-form optimal quotes:**
-```
-r(t,S,q) = S - qγσ²(T-t)                    # Reservation price
-δ* = (/γ)log(+γ/κ) + inventory_adjustment # Optimal spread
-```
+The model quotes around a reservation price that shifts with inventory:
 
-**Key insight:** Inventory creates asymmetric spreads
-- Long inventory → wider ask, tighter bid (incentivize selling)
-- Short inventory → wider bid, tighter ask (incentivize buying)
-
-**Statistical rigor:**  Monte arlo paths show:
-- Mean PnL: $- (varies by regime)
-- Sharpe: .-2. (realistic, not overfitted)
-- Inventory control: Mean-reverting around zero
-
-### 2. Self-inancing PnL ecomposition 
-
-**Enforces accounting identity:**
-```
-Total PnL = ash + Inventory × MidPrice - Initial_Wealth
+```text
+r(t, S, q) = S - q * gamma * sigma^2 * (T - t)
 ```
 
-**ecomposes into:**
-- **Spread apture** (-%): Profit from bid-ask spread
-- **Inventory PnL** (2-%): Mark-to-market from holding inventory
-- **dverse Selection** (-2%): ost from informed trading
+Intuition:
 
-**Verification:** omponents sum to total PnL (residual < e-)
+- Long inventory lowers the reservation price, encouraging selling.
+- Short inventory raises the reservation price, encouraging buying.
+- Higher volatility and risk aversion increase the inventory penalty.
 
-### . Multi-gent ompetition 
+The optimal spread balances spread capture against fill probability:
 
-**Proper order allocation:**
-- Price-time priority
-- est quotes fill first
-- Ties broken randomly (pro-rata approximation)
-- ll agents receive fills (not winner-take-all)
-
-**Observed dynamics:**
-- ll  agents receive fills with realistic distribution
-- gent with tightest spread receives most fills
-- In this parameter regime (small γ, κ=.), HIGHER risk aversion leads to TIGHTER spreads due to S formula: δ = (/γ)log( + γ/κ)
-- Small random noise (±. ticks) creates realistic competition
-- Spread compression and profit erosion emerge naturally
-- Zero-profit equilibrium emerges endogenously
-
-**Monte arlo:**  paths per agent show statistical significance
-
-### . Regime nalysis 
-
-**Shows where model breaks:**
-
-| Regime | Status | Reason |
-|--------|--------|--------|
-| σ < . |  Works | Inventory risk manageable |
-| σ > . |  reaks | Inventory variance explodes |
-|  >  |  Works | Sufficient fills for diversification |
-|  <  |  reaks | Too few fills, high variance |
-
-**Key insight:** Model has fundamental limits, not bugs
-
----
-
-## What ails (nd Why)
-
-### . High Volatility Regime (σ > .) 
-
-**ailure mode:** Inventory risk dominates spread capture
-
-**Evidence:**
-- Sharpe → negative
-- Inventory std → unbounded
-- PnL variance >> mean
-
-**Why:** Model assumes inventory can be managed via spreads, but extreme volatility overwhelms this mechanism
-
-**Real-world solution:** Position limits, faster mean reversion
-
-### 2. Low rrival Rate ( < ) 
-
-**ailure mode:** Insufficient fills for diversification
-
-**Evidence:**
-- Total fills <  per simulation
-- PnL dominated by single large moves
-- Sharpe highly unstable
-
-**Why:** Model assumes continuous trading, but low  violates this
-
-**Real-world solution:** Multi-venue aggregation, active quoting
-
-### . dverse Selection in Toxic low ⚠
-
-**Partial failure:** Model underestimates cost in directional markets
-
-**Evidence:**
-- dverse selection cost = -% of gross PnL
-- Microprice helps but doesn't eliminate
-
-**Why:** Model assumes symmetric information, but real markets have informed traders
-
-**Real-world solution:** low toxicity detection, adaptive spreads
-
-### . ompetition with Many gents (N > ) ⚠
-
-**Partial failure:** Profits → zero, but inventory risk remains
-
-**Evidence:**
-- Mean PnL → 
-- Inventory variance stays high
-- Sharpe → 
-
-**Why:** ompetition compresses spreads but not inventory risk
-
-**Real-world solution:** ifferentiation (speed, information, capital)
-
----
-
-## Model ssumptions (nd What reaks Them)
-
-| ssumption | Reality | Impact |
-|------------|---------|--------|
-| dS = σ dW | Jumps, stochastic vol | Underestimates tail risk |
-| Exponential utility | omplex preferences | Oversimplifies risk aversion |
-| λ(δ) =  exp(-κδ) | State-dependent fills | Misses regime changes |
-| No latency | Race conditions | Stale quote risk |
-| Single asset | Portfolio effects | Ignores hedging |
-| Symmetric adverse selection | irectional flow | Underestimates cost |
-
-**Key takeaway:** Model is analytically tractable but limited. Use for understanding principles, not production trading.
-
----
-
-## Why Sharpe Ratios re Low (.-2.)
-
-### This Is orrect, Not  ug
-
-**Reasons:**
-. **Market-neutral strategy:** No alpha, only spread capture
-2. **dverse selection:** Informed traders pick off quotes
-. **Inventory risk:** Holding positions in volatile markets
-. **ompetition:** Multiple agents compress spreads
-. **Realistic assumptions:** No overfitting
-
-**What high Sharpe (>) would indicate:**
-- Parameter optimization (overfitting)
-- Unrealistic assumptions
-- Missing transaction costs
-- herry-picked regimes
-
-**Interview answer:** " Sharpe of . with realistic assumptions and Monte arlo validation is more credible than . from a single optimized path."
-
----
-
-## ompetition ynamics
-
-### Why Profits Erode
-
-**Mechanism:**
-. Multiple agents quote competitively
-2. est prices get priority (price-time)
-. Spreads compress to marginal cost
-. Equilibrium: spread = inventory risk cost
-
-**Evidence from Monte arlo ( paths,  agents):**
-- gent  (γ=.): Mean PnL $ ± $2 (high risk)
-- gent  (γ=.): Mean PnL $ ± $ (balanced)
-- gent  (γ=.2): Mean PnL $2 ± $ (conservative)
-
-**Key insight:** More aggressive agents (low γ) have higher PnL but also higher variance. Risk-adjusted returns converge.
-
----
-
-## PnL ccounting
-
-### Self-inancing onstraint
-
-**Identity (enforced):**
-```
-Total PnL_t = ash_t + Inventory_t × MidPrice_t - Initial_Wealth
+```text
+delta* = (1 / gamma) * log(1 + gamma / kappa) + inventory_adjustment
 ```
 
-**ecomposition (verified):**
-```
-Total PnL = Spread_apture + Inventory_PnL - dverse_Selection + Residual
-```
+This project uses the model as a controlled research framework, not as a live trading claim.
 
-**Verification:** Residual < e- (numerical precision)
+## Experiment Modules
 
-**Example:**
-```
-Total PnL:           $.
-  Spread apture:     $.  (%)
-  Inventory PnL:      $.2  (2%)
-  dverse Selection: -$.  (-%)
-  Residual:           $.  (%)
-```
+| Experiment | Purpose |
+|---|---|
+| `baseline` | Monte Carlo baseline for single-agent market making |
+| `pnl_decomposition` | Verifies self-financing PnL accounting and attribution |
+| `competition` | Simulates multi-agent quoting and spread compression |
+| `regime_sweep` | Tests volatility and arrival-rate failure regions |
+| `microprice` | Compares mid-price versus microprice reference quoting |
+| `queue` | Studies queue position and fill-probability decay |
 
----
+## PnL Accounting
 
-## Microstructure Extensions
+The project enforces the self-financing identity:
 
-### . Queue Position
-
-**Model:** ill probability = f(queue_position, price_level)
-
-**Key finding:** Exponential decay with queue position
-- ront of queue: % fill probability
-- ack of queue (pos=2): % fill probability
-
-**Status:** Structural model (not calibrated)
-
-### 2. Microprice
-
-**efinition:** Imbalance-weighted price
-```
-microprice = bid × (ask_size / total) + ask × (bid_size / total)
+```text
+Total PnL = Cash + Inventory * MidPrice - Initial Wealth
 ```
 
-**Key finding:** Reduces adverse selection by -% vs mid-price
+PnL is decomposed into:
 
-**Status:** emonstrated conceptually (full implementation requires LO data)
+- Spread capture: earned bid/ask spread.
+- Inventory PnL: mark-to-market change from holding inventory.
+- Adverse selection: cost from being filled before unfavorable price moves.
+- Residual: attribution remainder that should be inspected rather than ignored.
 
----
+This makes the project harder to overstate: the PnL source must be explained rather than treated as a black box. The current committed table marks the self-financing check as valid, but the attribution residual is not zero, so use the decomposition as a diagnostic rather than claiming perfect attribution.
 
-## Interview Talking Points
+## Key Findings
 
-### One-Minute Pitch
+### 1. Realistic Market-Making Sharpe Is Modest
 
-"This is a production-grade vellaneda-Stoikov implementation with Monte arlo statistical rigor, self-financing PnL accounting, and honest failure analysis. The model derives optimal quotes from the HJ equation, manages inventory risk via asymmetric spreads, and shows competition-driven equilibrium. Key features:  M paths for distributions, verified PnL decomposition, and explicit identification of failure regimes. ll parameters are fixed—no overfitting. The system demonstrates both what works (inventory control, spread capture) and what fails (high volatility, low arrival rates)."
+The default baseline run produces mean PnL of $4.07 +/- $1.62 and mean Sharpe of 0.025 +/- 0.005 across 500 Monte Carlo paths. That is intentionally modest: market making earns spread but pays for inventory risk, adverse selection, and competition. Very high Sharpe from a simple simulator would usually suggest cherry-picking or missing costs.
 
-### Technical eep-ive
+### 2. Microprice Helps But Does Not Remove Adverse Selection
 
-**Q: How do you verify PnL accounting?**
+Using microprice instead of mid-price improves quote placement when order-book imbalance contains information. Treat this as a microstructure experiment, not as a live profitability claim; toxic flow remains a core failure mode.
 
-: Self-financing constraint: Total PnL = ash + Inventory × MidPrice - Initial_Wealth. We decompose into spread/inventory/adverse selection and verify components sum to total (residual < e-). This is pure accounting, not estimation.
+### 3. Queue Position Matters
 
-**Q: Why use Monte arlo instead of single paths?**
+Front-of-queue quotes have materially higher fill probability than deeper queue positions. This explains why theoretical quotes are not enough; execution priority changes realized PnL.
 
-: Single paths are anecdotal. Monte arlo (+ paths) provides distributions: mean ± std, confidence bands, statistical significance. Shows model behavior is robust, not cherry-picked.
+### 4. Competition Compresses Profits
 
-**Q: How does competition work?**
+When multiple market makers quote the same process, spreads compress and mean PnL moves toward zero while inventory risk remains. This is the correct economic intuition for competitive market making.
 
-: Price-time priority with proper order allocation. est quotes fill first, ties broken randomly. ompetition compresses spreads endogenously—no tuning. Monte arlo shows profit erosion is statistically significant.
+### 5. The Model Has Clear Failure Regimes
 
-**Q: Where does the model break?**
+| Regime | Failure Mode |
+|---|---|
+| High volatility | Inventory variance overwhelms spread capture |
+| Low arrival intensity | Too few fills; PnL dominated by isolated events |
+| Toxic directional flow | Adverse selection dominates quoted spread |
+| Many competitors | Spread compression erodes edge |
 
-: High volatility (σ > .): inventory risk explodes. Low arrival rate ( < ): insufficient fills. These are fundamental limits, not bugs. Regime sweeps show failure regions explicitly.
+## What Not To Claim
 
-**Q: What would you change for production?**
+- Do not claim this is a production trading system.
+- Do not claim the strategy is live-tradeable.
+- Do not claim real exchange data calibration unless added later.
+- Do not report a single lucky path as performance.
+- Do not hide that results are simulated.
 
-: () Real LO data integration, (2) Latency modeling, () Position limits, () Multi-venue aggregation, () low toxicity detection. ut keep fixed parameters—no in-sample optimization.
+## Resume Bullets
 
----
+- Derived and implemented Avellaneda-Stoikov inventory-aware optimal quoting with reservation-price adjustment, asymmetric spreads, and Monte Carlo validation across market regimes.
+- Built PnL attribution diagnostics decomposing market-making returns into spread capture, inventory PnL, adverse selection, and residual attribution.
+- Simulated multi-agent competition, queue-position effects, and microprice-based quoting; identified failure regimes where high volatility, low fills, toxic flow, or spread compression make the model unreliable.
 
-## Project Structure
+## Interview Defense
 
+### Why does inventory affect quotes?
+
+Inventory creates directional exposure. A long market maker wants to reduce inventory, so the reservation price shifts downward and quotes become more aggressive on the ask side. A short market maker does the opposite.
+
+### Why is the Sharpe not extremely high?
+
+Because the model earns spread without directional alpha. The default Monte Carlo baseline has mean Sharpe 0.025, which is modest but more credible than an inflated single-path result.
+
+### What is the most important limitation?
+
+The model assumes a simplified price process and fill-intensity function. Real markets have latency, hidden liquidity, queue dynamics, jumps, regime changes, and informed flow.
+
+### How would you improve it?
+
+Calibrate fill intensities to real LOB data, add latency and queue priority, impose hard position limits, detect toxic flow, and extend from single-asset quoting to portfolio-aware market making.
+
+## Repository Structure
+
+```text
+.
+|-- main.py
+|-- config/parameters.yaml
+|-- experiments/
+|   |-- baseline_experiment.py
+|   |-- pnl_decomposition_experiment.py
+|   |-- competition_experiment.py
+|   |-- regime_sweep_experiment.py
+|   |-- microprice_experiment.py
+|   `-- queue_experiment.py
+|-- src/
+|   |-- agents/
+|   |-- analysis/
+|   |-- market/
+|   |-- models/
+|   |-- simulation/
+|   `-- utils/
+|-- results/
+|   |-- figures/
+|   `-- tables/
+|-- requirements.txt
+`-- report.pdf
 ```
-avellaneda_stoikov_mm/
-├── main.py                      # Single entry point
-├── config/parameters.yaml       # ixed parameters
-├── experiments/                 #  experiments
-│   ├── baseline_experiment.py           # Monte arlo baseline
-│   ├── pnl_decomposition_experiment.py  # Self-financing accounting
-│   ├── competition_experiment.py        # Multi-agent M
-│   ├── regime_sweep_experiment.py       # ailure analysis
-│   ├── microprice_experiment.py         # Microstructure
-│   └── queue_experiment.py              # Queue position
-├── src/
-│   ├── models/                  # S model, HJ, intensities
-│   ├── market/                  # Price, order flow, LO
-│   ├── agents/                  # Market makers
-│   ├── simulation/              # Simulators
-│   └── analysis/                # PnL attribution, diagnostics
-└── results/
-    ├── figures/                 #  figures
-    └── tables/                  #  tables
-```
-
----
-
-## References
-
-. vellaneda, M., & Stoikov, S. (2). "High-frequency trading in a limit order book." *Quantitative inance*, (), 2-22.
-
-2. Guéant, O., Lehalle, . ., & ernandez-Tapia, J. (2). "ealing with the inventory risk." *Mathematics and inancial Economics*, (), -.
-
-. artea, Á., Jaimungal, S., & Penalva, J. (2). *lgorithmic and High-requency Trading*. ambridge University Press.
-
----
-
-## License
-
-MIT License - or research and educational use
-
----
 
 ## Status
 
- **Production-grade research code**  
- **production-ready**  
- **Statistically rigorous**  
- **Honest about limitations**  
- **Not for production trading**  
-
----
-
-**Last Updated:** ebruary 22  
-**Quality Standard:** quantitative trading firms / market making firms / trading firms / high-frequency trading firms / quantitative trading firms
+This is a research and interview project for quant trader / market-making roles. It is intentionally honest about limitations and is not intended for production trading.
