@@ -1,251 +1,135 @@
-# High-Frequency Trading: Limit Order Book Microstructure Analysis
+# HFT Microstructure Alpha Signals
 
-A production-grade research project demonstrating tick-by-tick price prediction using full-depth limit order book data, with realistic execution modeling and comprehensive performance attribution.
+Research-grade limit order book microstructure project showing a central trading lesson: high directional accuracy does not automatically become profitable execution.
 
-## Overview
+The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection.
 
-This project implements an end-to-end HFT alpha research pipeline that:
-- Predicts short-term price movements (1-20 ticks ahead) using microstructure features
-- Achieves 90.8% prediction accuracy with XGBoost
-- Demonstrates realistic execution constraints through event-driven backtesting
-- Provides comprehensive PnL attribution and execution diagnostics
+## Executive Snapshot
 
-**Key Insight**: High predictive accuracy does not guarantee profitability in HFT. This project honestly demonstrates why transaction costs, adverse selection, and queue dynamics dominate alpha at sub-tick scales.
+| Metric | Result |
+|---|---:|
+| Data | Synthetic LOB, 100,000 events |
+| Feature count | 59 microstructure features |
+| Horizons | 1, 5, 10, 20 ticks |
+| Logistic baseline accuracy | 62.5% |
+| XGBoost 5-tick accuracy | 90.8% |
+| 5-tick hit rate | 95.1% |
+| Market-order PnL | -$58.47 |
+| Limit + confidence filter PnL | -$3.30 |
+| EV-filtered PnL | +$0.41 on 1 trade |
+| Negative-EV signal filter rate | 94.6% |
+| Passive fill rate | 20.0% |
 
-## Project Structure
+## Core Insight
 
-```
-├── config/                 # Configuration files
-│   ├── backtest_config.yaml
-│   ├── data_config.yaml
-│   ├── feature_config.yaml
-│   └── model_config.yaml
-├── data/                   # Data storage
-│   ├── processed/         # Feature matrices
-│   └── raw/               # LOB snapshots
-├── notebooks/             # Jupyter notebooks for analysis
-├── reports/               # Generated reports and figures
-├── src/                   # Source code
-│   ├── analysis/         # Alpha decay and regime analysis
-│   ├── backtest/         # Execution simulators
-│   ├── data/             # Data loading and cleaning
-│   ├── features/         # Feature engineering
-│   ├── labels/           # Label generation
-│   ├── models/           # Model training and evaluation
-│   └── utils/            # Plotting and metrics
-├── tests/                 # Unit tests
-├── run_pipeline.py        # Main execution script
-├── requirements.txt       # Python dependencies
-└── verify_installation.py # Installation checker
-```
+The model can classify short-horizon price moves well, but most signals are not economically tradable after costs. The EV filter removes 94.6% of candidate signals and leaves only one executed trade in the committed report. That is not a profitability claim; it is evidence that realistic microstructure frictions dominate naive predictive accuracy.
 
-## Features
+## What This Project Demonstrates
 
-### Microstructure Features
-- **Order Flow Imbalance (OFI)**: Multi-level depth changes weighted by price
-- **Queue Imbalance**: Bid/ask depth ratios at multiple levels
-- **Microprice**: Depth-weighted fair value estimator
-- **Trade Sign Classification**: Lee-Ready algorithm with signed volume
-- **Spread Dynamics**: Absolute/relative spread and volatility
-- **Base Features**: Returns, depth, volatility proxies, event intensity
-
-### Models
-- **Baseline**: Logistic regression (62.5% accuracy)
-- **XGBoost**: Tree-based model (90.8% accuracy)
-- Feature importance analysis
-- Walk-forward validation
-
-### Execution Strategies
-
-**1. Market Orders (Baseline)**
-- Aggressive execution crossing the spread
-- Result: -$58.47 PnL, 116 trades
-
-**2. Limit Orders with Confidence Filtering**
-- Passive execution at best bid/ask
-- Confidence threshold: |P(up) - P(down)| > 0.20
-- Volatility regime filtering
-- Result: -$3.30 PnL, 53 trades
-
-**3. EV-Based Execution (Advanced)**
-- Expected Value filtering: EV = confidence × expected_move - cost + rebate
-- Spread-conditioned entry/exit
-- Queue-aware order cancellation
-- Maker rebate modeling
-- Result: +$0.41 PnL, 1 trade (94.6% filter rate)
-
-## Installation
-
-```bash
-# Clone repository
-git clone <repository-url>
-cd hft-lob-microstructure
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Verify installation
-python verify_installation.py
-```
+- Order Flow Imbalance, queue imbalance, microprice, spread dynamics, and event-time feature engineering.
+- Time-respecting model validation for short-horizon prediction.
+- Logistic regression baseline versus XGBoost.
+- Alpha decay across 1, 5, 10, and 20 tick horizons.
+- Regime analysis across volatility, liquidity, and time-of-day segments.
+- Event-driven backtesting with market orders, passive limit orders, and EV-based execution.
+- Honest execution diagnostics explaining why most high-accuracy signals should be rejected.
 
 ## Quick Start
 
 ```bash
-# Run complete pipeline
+pip install -r requirements.txt
+python verify_installation.py
 python run_pipeline.py
 ```
 
-This executes:
-1. Synthetic LOB data generation (100k events)
-2. Feature engineering (59 features)
-3. Label creation (4 horizons: 1, 5, 10, 20 ticks)
-4. Model training (Logistic + XGBoost)
-5. Alpha decay analysis
-6. Regime analysis (volatility, liquidity, time-of-day)
-7. Event-driven backtesting (3 execution strategies)
-8. Report generation with figures
+The pipeline runs:
 
-## Results
+1. Synthetic LOB data generation.
+2. Feature engineering.
+3. Label creation for 1, 5, 10, and 20 tick horizons.
+4. Logistic and XGBoost model training.
+5. Alpha decay and regime analysis.
+6. Event-driven execution tests.
+7. Report and figure generation.
 
-### Model Performance
-- **XGBoost Accuracy**: 90.8% on test set
-- **Hit Rate (5-tick)**: 95.1%
-- **Alpha Decay**: 96% (1-tick) → 92% (20-tick)
-- **Regime Robustness**: Consistent across volatility/liquidity regimes
+## Project Structure
 
-### Execution Performance
-
-| Strategy | PnL | Sharpe | Trades | Key Insight |
-|----------|-----|--------|--------|-------------|
-| Market Orders | -$58.47 | -105.02 | 116 | Spread crossing kills profitability |
-| Limit + Filtering | -$3.30 | -2.17 | 53 | Improved but still unprofitable |
-| EV-Based | +$0.41 | +0.23 | 1 | Ultra-selective, barely profitable |
-
-### Key Findings
-
-1. **Transaction Costs Dominate**: At sub-tick scales, spread crossing costs (~0.5 ticks) consume most alpha
-2. **Low Fill Rates**: Passive orders fill only 20% of the time due to adverse selection
-3. **Economic Filtering Essential**: 94.5% of signals have negative expected value after costs
-4. **Infrastructure Matters**: Co-location, queue priority, and market making are critical for profitability
-
-## Execution Logic
-
-### EV-Based Filtering
-```python
-EV = confidence × expected_move - transaction_cost + maker_rebate
-Execute only when EV > 0
+```text
+.
+|-- config/
+|-- notebooks/
+|-- reports/
+|   |-- summary_report.md
+|   `-- figures/
+|-- src/
+|   |-- analysis/
+|   |-- backtest/
+|   |-- data/
+|   |-- features/
+|   |-- labels/
+|   |-- models/
+|   `-- utils/
+|-- run_pipeline.py
+|-- verify_installation.py
+`-- requirements.txt
 ```
 
-**Fixed Parameters** (not optimized on test data):
-- Expected move: 1.5 ticks (historical average)
-- Maker rebate: 0.2 ticks (industry standard)
-- Spread threshold: median (50th percentile)
-- Order lifetime: 10 events
+## Feature Families
 
-### Queue-Aware Cancellation
-Orders are cancelled if:
-- OFI flips sign (market sentiment reverses)
-- Queue imbalance deteriorates
-- Spread widens beyond 1.5× entry
-- Timeout after 10 events
+| Family | Examples |
+|---|---|
+| Order Flow | OFI, signed volume, trade direction |
+| Queue State | Bid/ask depth ratios, queue imbalance |
+| Fair Value | Microprice, mid-price changes |
+| Spread | Absolute spread, relative spread, spread widening |
+| Event-Time | Tick returns, rolling volatility, event intensity |
 
-## PnL Attribution
+## Execution Results
 
-Comprehensive breakdown of profit sources:
-- **Directional PnL**: Price movement capture
-- **Spread Capture**: Spread improvement during holding
-- **Transaction Costs**: Exchange fees and spread crossing
-- **Maker Rebates**: Liquidity provision incentives
-- **Adverse Selection**: Losses from filling at wrong times
+| Strategy | PnL | Sharpe | Trades | Interpretation |
+|---|---:|---:|---:|---|
+| Market Orders | -$58.47 | -105.02 | 116 | Spread crossing destroys edge |
+| Limit + Filtering | -$3.30 | -2.17 | 53 | Passive execution helps but remains negative |
+| EV-Based | +$0.41 | +0.23 | 1 | Too selective to claim robust profitability |
 
-## Configuration
+## Why Accuracy Does Not Monetize
 
-Modify YAML files in `config/` to customize:
-- `data_config.yaml`: Data generation parameters
-- `feature_config.yaml`: Feature engineering settings
-- `model_config.yaml`: Model hyperparameters
-- `backtest_config.yaml`: Execution assumptions
+1. Expected moves are small relative to spread and fees.
+2. Passive orders fill only when the market comes to the quote.
+3. Filled passive orders are exposed to adverse selection.
+4. Queue priority and latency are missing from a simple research simulator.
+5. Synthetic LOB data does not include hidden liquidity, toxic flow, or real venue mechanics.
 
-## Output
+## What Not To Claim
 
-After running the pipeline, check:
-- `reports/summary_report.md`: Comprehensive analysis
-- `reports/figures/`: All generated plots
-  - Feature importance
-  - Alpha decay curves
-  - Regime performance
-  - PnL curves (3 strategies)
-  - Execution diagnostics
-  - PnL attribution breakdown
+- Do not claim this is profitable HFT.
+- Do not claim the +$0.41 EV-filtered result is meaningful performance; it is one trade.
+- Do not claim real LOB data.
+- Do not claim production readiness.
+- Do not claim high accuracy implies tradable edge.
 
-## Why This Project Matters
+## Resume Bullets
 
-This project demonstrates:
+- Built a 59-feature synthetic LOB microstructure pipeline using OFI, queue imbalance, microprice, spread dynamics, and event-time features; XGBoost reached 90.8% 5-tick directional accuracy versus 62.5% logistic baseline.
+- Added event-driven execution simulation showing market-order PnL -$58.47 and limit-filtered PnL -$3.30, demonstrating that spread costs and adverse selection can erase high predictive accuracy.
+- Implemented EV-based execution filter that rejected 94.6% of candidate signals as uneconomic after costs; final result (+$0.41 on 1 trade) is framed as signal rejection discipline, not profitability.
 
-1. **Realistic Execution Modeling**: Event-driven backtesting with latency, queue dynamics, and transaction costs
-2. **Honest Results**: Shows why 90.8% accuracy → $0.41 PnL (not millions)
-3. **No Overfitting**: All execution parameters fixed before testing
-4. **Production-Quality Code**: Modular, documented, and testable
-5. **production-ready**: Comprehensive diagnostics and defensible decisions
+## Interview Defense
 
-## Limitations
+### Why is this still a strong project if PnL is weak?
 
-1. **Synthetic Data**: Real LOB has hidden orders, icebergs, and toxic flow
-2. **Single Instrument**: No cross-asset effects or correlation
-3. **Simplified Execution**: Real HFT uses sophisticated order placement
-4. **No Adverse Selection Modeling**: Queue position risk understated
-5. **Static Model**: No online learning or adaptation
+Because it demonstrates the most important HFT lesson: prediction and execution are different problems. A model can forecast direction while still failing after spread, queue, and adverse-selection costs.
 
-## Future Improvements
+### What would be needed for a stronger live strategy?
 
-1. **Market Making Strategy**: Post on both sides, earn rebates consistently
-2. **Co-location**: Sub-microsecond latency for better fill rates
-3. **Multi-Asset**: Cross-instrument signals and statistical arbitrage
-4. **Deep Learning**: LSTM/Transformer for sequence modeling
-5. **Reinforcement Learning**: Optimal execution policies
+Real LOB data, calibrated fill probabilities, queue-position modeling, latency assumptions, venue-specific fees/rebates, and a strategy such as market making or cross-asset arbitrage that can monetize microstructure signals more directly.
 
-## Technical Details
+### Why use synthetic data?
 
-### Event-Driven Backtesting
-- Processes LOB updates sequentially (no clock-time resampling)
-- Minimum 1-event latency between signal and execution
-- Realistic fill modeling based on queue position
-- Comprehensive transaction cost accounting
-
-### Feature Engineering
-- All features computed in event-time (no lookahead bias)
-- Proper alignment with labels
-- Handles missing data and outliers
-- Efficient computation with NumPy/Pandas
-
-### Model Training
-- Time-respecting train/validation/test split (no shuffling)
-- Walk-forward validation for hyperparameter tuning
-- Feature importance analysis
-- Comprehensive evaluation metrics
-
-## Dependencies
-
-- Python 3.8+
-- NumPy, Pandas, SciPy
-- Scikit-learn, XGBoost
-- Matplotlib, Seaborn
-- PyYAML, Numba, Joblib, tqdm
-
-## License
-
-This project is for educational and research purposes.
+It makes the full pipeline reproducible and shareable. The limitation is that real LOBs contain hidden liquidity, participant behavior, and venue mechanics not captured here.
 
 ## References
 
-- Cont, R., Kukanov, A., & Stoikov, S. (2014). The price impact of order book events.
-- Cartea, Á., Jaimungal, S., & Penalva, J. (2015). Algorithmic and High-Frequency Trading.
-- Lehalle, C. A., & Laruelle, S. (2018). Market Microstructure in Practice.
-
-## Contact
-
-For questions or collaboration opportunities, please open an issue.
-
----
-
-**Note**: This project demonstrates realistic HFT execution constraints. The modest PnL (+$0.41) reflects honest modeling of transaction costs, adverse selection, and queue dynamics - not a failure of the predictive model.
+- Cont, R., Kukanov, A., and Stoikov, S. (2014). The price impact of order book events.
+- Cartea, A., Jaimungal, S., and Penalva, J. (2015). Algorithmic and High-Frequency Trading.
+- Lehalle, C. A., and Laruelle, S. (2018). Market Microstructure in Practice.
