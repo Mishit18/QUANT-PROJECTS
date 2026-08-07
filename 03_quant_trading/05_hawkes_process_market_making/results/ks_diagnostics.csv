@@ -1,0 +1,7 @@
+event_type,ks_statistic,p_value,n_samples
+limit_buy,0.0423,0.0656,947
+limit_sell,0.0425,0.0506,1010
+market_buy,0.0640,0.0306,505
+market_sell,0.0560,0.0956,478
+cancel_buy,0.0773,0.0122,422
+cancel_sell,0.0693,0.0287,437

@@ -42,7 +42,11 @@ class Trade:
     price: float
     size: int
     aggressor_side: Side
+    passive_order_id: int | None = None
     
     def __repr__(self):
         side_str = "BUY" if self.aggressor_side == Side.BUY else "SELL"
-        return f"Trade({self.price:.2f}, {self.size}, {side_str}@{self.timestamp:.3f})"
+        return (
+            f"Trade({self.price:.2f}, {self.size}, {side_str}@{self.timestamp:.3f}, "
+            f"passive_id={self.passive_order_id})"
+        )

@@ -38,7 +38,7 @@ class BacktestEngine:
         )
         
         # Quote update frequency
-        self.quote_update_interval = 0.1  # Update quotes every 0.1 time units
+        self.quote_update_interval = config['agent'].get('quote_update_interval', 0.1)
         self.last_quote_update = 0.0
     
     def run(self, events):
@@ -69,12 +69,15 @@ class BacktestEngine:
             # Process market event
             trades = self.event_processor.process_event(timestamp, event_type)
             
-            # Check if agent was filled
+            # Check if agent quotes were filled as passive orders.
             for trade in trades:
-                # Check if trade involved agent's orders
-                if self.agent.active_bid_id in self.lob.orders or self.agent.active_ask_id in self.lob.orders:
-                    # Simplified: assume agent might be filled
-                    pass
+                if trade.passive_order_id in {self.agent.active_bid_id, self.agent.active_ask_id}:
+                    self.agent.process_fill(
+                        trade.passive_order_id,
+                        trade.price,
+                        trade.size,
+                        timestamp,
+                    )
             
             # Update quotes periodically
             if timestamp - self.last_quote_update >= self.quote_update_interval:
@@ -123,7 +126,7 @@ class BacktestEngine:
         
         if 'risk' in perf:
             print(f"\nRisk Metrics:")
-            print(f"  Sharpe Ratio: {perf['risk']['sharpe_ratio']:.3f}")
+            print(f"  Sharpe-like Ratio: {perf['risk']['sharpe_ratio']:.3f}")
             print(f"  Max Drawdown: ${perf['risk']['max_drawdown']:.2f} ({perf['risk']['max_drawdown_pct']:.2f}%)")
         
         if 'trading' in perf:

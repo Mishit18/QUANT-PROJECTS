@@ -113,7 +113,7 @@ class LimitOrderBook:
                 order = level[0]
                 fill_size = min(remaining, order.size)
                 
-                trades.append(Trade(timestamp, order.price, fill_size, Side.BUY))
+                trades.append(Trade(timestamp, order.price, fill_size, Side.BUY, order.order_id))
                 
                 order.size -= fill_size
                 remaining -= fill_size
@@ -142,7 +142,7 @@ class LimitOrderBook:
                 order = level[0]
                 fill_size = min(remaining, order.size)
                 
-                trades.append(Trade(timestamp, order.price, fill_size, Side.SELL))
+                trades.append(Trade(timestamp, order.price, fill_size, Side.SELL, order.order_id))
                 
                 order.size -= fill_size
                 remaining -= fill_size
@@ -217,7 +217,7 @@ class LimitOrderBook:
                 contra_order = level[0]
                 fill_size = min(order.size, contra_order.size)
                 
-                trades.append(Trade(timestamp, contra_order.price, fill_size, Side.BUY))
+                trades.append(Trade(timestamp, contra_order.price, fill_size, Side.BUY, contra_order.order_id))
                 
                 order.size -= fill_size
                 contra_order.size -= fill_size
@@ -246,7 +246,7 @@ class LimitOrderBook:
                 contra_order = level[0]
                 fill_size = min(order.size, contra_order.size)
                 
-                trades.append(Trade(timestamp, contra_order.price, fill_size, Side.SELL))
+                trades.append(Trade(timestamp, contra_order.price, fill_size, Side.SELL, contra_order.order_id))
                 
                 order.size -= fill_size
                 contra_order.size -= fill_size

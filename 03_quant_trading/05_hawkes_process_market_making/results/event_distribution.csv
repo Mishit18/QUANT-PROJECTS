@@ -1,0 +1,7 @@
+event_type,count,share_pct
+limit_buy,948,24.9
+limit_sell,1011,26.6
+market_buy,506,13.3
+market_sell,479,12.6
+cancel_buy,423,11.1
+cancel_sell,438,11.5

@@ -184,7 +184,8 @@ class HawkesDiagnostics:
         
         if show:
             plt.tight_layout()
-            plt.show()
+            if plt.get_backend().lower() != 'agg':
+                plt.show()
     
     def plot_all_diagnostics(self, events, save_path=None):
         """
@@ -230,4 +231,5 @@ class HawkesDiagnostics:
         if save_path:
             plt.savefig(save_path, dpi=150, bbox_inches='tight')
         
-        plt.show()
+        if plt.get_backend().lower() != 'agg':
+            plt.show()

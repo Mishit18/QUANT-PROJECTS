@@ -235,9 +235,8 @@ class MarketMaker:
         if len(pnls) > 1:
             returns = np.diff(pnls)
             sharpe = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0.0
-            sharpe_annualized = sharpe * np.sqrt(252 * 6.5 * 3600)  # Assuming second resolution
         else:
-            sharpe_annualized = 0.0
+            sharpe = 0.0
         
         # Inventory stats
         inv_stats = self.inventory_controller.get_inventory_stats()
@@ -250,7 +249,7 @@ class MarketMaker:
             'max_pnl': max_pnl,
             'min_pnl': min_pnl,
             'max_drawdown': max_drawdown,
-            'sharpe_ratio': sharpe_annualized,
+            'sharpe_ratio': sharpe,
             'num_trades': num_trades,
             'inventory_stats': inv_stats
         }

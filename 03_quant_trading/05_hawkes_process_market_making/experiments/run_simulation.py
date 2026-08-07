@@ -2,6 +2,7 @@
 Hawkes-driven LOB simulation with market-making agent.
 """
 import sys
+import warnings
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
@@ -118,7 +119,9 @@ def run_mle_estimation(events, config):
     print("\nFitting Hawkes parameters via MLE...")
     print("  (This may take a minute...)")
     
-    result = estimator.fit(events, T, max_iter=50)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        result = estimator.fit(events, T, max_iter=50)
     
     print(f"\nEstimation Complete:")
     print(f"  Success: {result['success']}")
@@ -183,7 +186,8 @@ def plot_results(results):
     plt.savefig('backtest_results.png', dpi=150, bbox_inches='tight')
     print("  Saved: backtest_results.png")
     
-    plt.show()
+    if plt.get_backend().lower() != 'agg':
+        plt.show()
 
 
 def main():

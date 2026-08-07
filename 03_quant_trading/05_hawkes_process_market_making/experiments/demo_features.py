@@ -3,6 +3,7 @@ Demonstration of core components.
 This script showcases individual components before running the full simulation.
 """
 import sys
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -102,7 +103,9 @@ def demo_mle_estimation(events, true_baseline, true_kernel):
     estimator = HawkesMLEEstimator(num_types=2)
     
     print("Fitting parameters via MLE...")
-    result = estimator.fit(events, T, max_iter=30)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        result = estimator.fit(events, T, max_iter=30)
     
     print(f"\nEstimation result:")
     print(f"  Success: {result['success']}")
@@ -221,7 +224,7 @@ def demo_market_maker():
     agent = MarketMaker(lob, tick_size=0.01, config=config)
     
     print("Agent configuration:")
-    print(f"  Inventory limit: ±{agent.inventory_limit}")
+    print(f"  Inventory limit: +/-{agent.inventory_limit}")
     print(f"  Risk aversion: {agent.risk_aversion}")
     print(f"  Target spread: {agent.target_spread_ticks} ticks")
     print(f"  Quote size: {agent.quote_size}")

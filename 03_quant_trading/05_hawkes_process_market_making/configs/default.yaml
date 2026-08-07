@@ -49,6 +49,7 @@ agent:
   min_spread_ticks: 1
   max_spread_ticks: 5
   latency_ms: 1.0
+  quote_update_interval: 5.0
   adverse_selection_threshold: 0.7  # Imbalance threshold to widen spread
   quote_size: 10
 

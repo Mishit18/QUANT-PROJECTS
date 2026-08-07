@@ -4,16 +4,17 @@ Performance metrics for backtesting.
 import numpy as np
 
 
-def compute_sharpe_ratio(returns, periods_per_year=252*6.5*3600):
+def compute_sharpe_ratio(returns, periods_per_year=None):
     """
-    Compute annualized Sharpe ratio.
+    Compute a Sharpe-like mean/std ratio.
     
     Parameters
     ----------
     returns : array-like
         Return series
-    periods_per_year : float
-        Number of periods per year for annualization
+    periods_per_year : float, optional
+        Optional annualization multiplier. Leave unset for simulator event-level
+        comparisons where annualization would be misleading.
     
     Returns
     -------
@@ -29,7 +30,9 @@ def compute_sharpe_ratio(returns, periods_per_year=252*6.5*3600):
     if std_return == 0:
         return 0.0
     
-    sharpe = mean_return / std_return * np.sqrt(periods_per_year)
+    sharpe = mean_return / std_return
+    if periods_per_year is not None:
+        sharpe *= np.sqrt(periods_per_year)
     return sharpe
 
 
