@@ -2,7 +2,6 @@
 Full Factor Modeling Pipeline
 Executes complete analysis from data to results
 
-FINAL VERSION - DO NOT MODIFY
 Single command execution: python analysis/run_full_pipeline.py
 """
 
@@ -82,12 +81,12 @@ def main():
     logger.info(f"  Components: {summary['n_components']}")
     logger.info(f"  Variance explained: {summary['total_variance_explained']:.2%}")
     
-    # advanced evaluation
-    Advanced_eval = pca_model.evaluate_factors_Advanced()
-    logger.info(f"\nPCA Factor Evaluation (advanced Framework):")
+    # Multi-lens evaluation
+    elite_eval = pca_model.evaluate_factors_elite()
+    logger.info(f"\nPCA Factor Evaluation (multi-lens framework):")
     logger.info(f"  Statistical: {summary['n_components']} components, {summary['total_variance_explained']:.2%} variance")
-    logger.info(f"  Economic: PC1 Sharpe = {Advanced_eval['economic']['PC1']['sharpe_ratio']:.2f}")
-    logger.info(f"  Note: Not all PCA factors expected to earn premia (see advanced evaluation)")
+    logger.info(f"  Economic: PC1 Sharpe = {elite_eval['economic']['PC1']['sharpe_ratio']:.2f}")
+    logger.info(f"  Note: Not all PCA factors are expected to earn premia")
     
     logger.info(f"\nTop 3 Factor Sharpe Ratios:")
     for i, (factor, sharpe) in enumerate(list(summary['factor_sharpe_ratios'].items())[:3]):
@@ -260,7 +259,7 @@ def main():
     logger.info(f"\nPCA Factors:")
     logger.info(f"  Components: {pca_model.n_components}")
     logger.info(f"  Variance explained: {summary['total_variance_explained']:.2%}")
-    pc1_sharpe = Advanced_eval['economic']['PC1']['sharpe_ratio']
+    pc1_sharpe = elite_eval['economic']['PC1']['sharpe_ratio']
     logger.info(f"  PC1 Sharpe: {pc1_sharpe:.2f} (market factor)")
     logger.info(f"  Interpretation: Statistical risk factors, not all earn premia")
     

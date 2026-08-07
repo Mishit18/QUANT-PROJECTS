@@ -2,8 +2,7 @@
 PCA-Based Factor Model
 Implements eigen-decomposition, factor extraction, and eigen-portfolio construction
 
-FINAL VERSION - DO NOT MODIFY
-advanced methodology: Standardize for covariance, apply to raw returns
+Research methodology: standardize for covariance, apply weights to raw returns
 """
 
 import numpy as np
@@ -50,7 +49,7 @@ class PCAFactorModel:
         """
         Fit PCA model to return data
         
-        advanced METHODOLOGY:
+        Research methodology:
         - Perform PCA on standardized returns to extract covariance structure
         - Use eigenvectors to construct eigen-portfolios
         - Compute factor returns using RAW returns (not standardized)
@@ -353,19 +352,19 @@ class PCAFactorModel:
         
         return summary
     
-    def evaluate_factors_Advanced(self) -> dict:
+    def evaluate_factors_elite(self) -> dict:
         """
-        advanced EVALUATION FRAMEWORK
+        Multi-lens PCA factor evaluation framework.
         
         Evaluate PCA factors using three distinct lenses:
         A) Statistical importance (variance explained, stability)
-        B) Explanatory power (R², incremental fit)
+        B) Explanatory power (R-squared, incremental fit)
         C) Economic relevance (returns, Sharpe, regime behavior)
         
         This framework recognizes that:
         - Not all PCA factors earn premia
         - Some are pure risk factors (zero expected return)
-        - Statistical importance ≠ economic profitability
+        - Statistical importance is not the same as economic profitability
         
         Returns:
         --------
@@ -383,7 +382,7 @@ class PCAFactorModel:
         
         # B) EXPLANATORY POWER (computed later in regression)
         evaluation['explanatory'] = {
-            'note': 'R² and incremental fit computed in time-series regression',
+            'note': 'R-squared and incremental fit computed in time-series regression',
             'interpretation': 'Measures ability to explain cross-sectional variation'
         }
         
@@ -402,7 +401,7 @@ class PCAFactorModel:
         
         evaluation['economic'] = factor_stats
         
-        # advanced INTERPRETATION GUIDE
+        # Interview interpretation guide
         evaluation['interpretation_guide'] = {
             'statistical_vs_economic': 'High variance explained does NOT imply high Sharpe ratio',
             'zero_premia_factors': 'Many PCA factors are risk factors with zero expected return',
@@ -412,7 +411,7 @@ class PCAFactorModel:
         }
         
         return evaluation
-    
+
     def save_results(self, output_dir: str = "results") -> None:
         """
         Save PCA results
@@ -432,9 +431,9 @@ class PCAFactorModel:
         summary = self.get_summary()
         save_results(summary, 'pca_summary.json', output_dir)
         
-        # Save advanced evaluation framework
-        Advanced_eval = self.evaluate_factors_Advanced()
-        save_results(Advanced_eval, 'pca_Advanced_evaluation.json', output_dir)
+        # Save multi-lens evaluation framework
+        elite_eval = self.evaluate_factors_elite()
+        save_results(elite_eval, 'pca_elite_evaluation.json', output_dir)
         
         # Save eigenvalues and variance explained
         variance_df = pd.DataFrame({

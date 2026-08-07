@@ -1,248 +1,142 @@
-# Systematic Factor Modeling via PCA and Eigen-Portfolios
+# Systematic Factor Modeling with PCA Eigen-Portfolios
 
-**A production-grade implementation of statistical and economic factor models for equity risk premia analysis.**
+A quant research project for decomposing equity returns into statistical PCA
+factors and economically motivated long-short factors. The project is designed
+to show institutional-style factor research: clean data handling, eigen-portfolio
+construction, risk-premia estimation, regime analysis, risk controls, plots,
+and reproducible outputs.
 
----
+The main research point is explicit: PCA factors are excellent for risk
+decomposition and covariance structure, while classical factors are better
+suited for economic interpretation and possible alpha research.
 
-## Executive Summary
+## Why It Matters
 
-This project implements a comprehensive factor modeling framework that combines Principal Component Analysis (PCA) with classical equity factors to decompose cross-sectional return patterns, estimate risk premia, and analyze regime-dependent factor behavior. The implementation follows professional standards used in institutional risk models (Barra, Axioma) and demonstrates advanced understanding of the distinction between statistical risk factors and economically priced factors.
-
-**Core Achievement**: Proper PCA methodology where eigenvectors are extracted from standardized returns (for covariance structure) but applied to raw returns (for economic interpretation), producing meaningful factor returns and Sharpe ratios.
-
----
-
-## What Makes This Project advanced
-
-1. **Methodologically Correct PCA**: Separates covariance estimation from factor return computation
-2. **Three-Lens Evaluation**: Statistical importance, explanatory power, and economic relevance
-3. **Intellectual Honesty**: Clear distinction between risk decomposition (PCA) and alpha generation (classical factors)
-4. **Production-Grade Code**: Modular, tested, configurable, and reproducible
-5. **production-ready**: Comprehensive defense documentation with precise technical answers
-
----
+- Separates statistical risk factors from economically priced factors.
+- Runs PCA on standardized returns, then applies eigenvectors to raw returns so
+  factor returns retain meaningful scale.
+- Compares PCA factors against momentum, value, size, quality, and low-vol
+  factors using Sharpe, drawdown, regressions, and regime behavior.
+- Produces CSV/JSON/PNG artifacts suitable for resume screening and interview
+  discussion.
+- Keeps conclusions honest: high explained variance does not imply positive
+  expected return.
 
 ## Quick Start
 
-### Installation
 ```bash
 pip install -r requirements.txt
 python tests/test_installation.py
-```
-
-### Execution
-```bash
 python analysis/run_full_pipeline.py
 ```
 
-**Runtime**: ~30 seconds  
-**Output**: Results in `results/`, plots in `plots/`, logs in `logs/`
+Validated run time in this workspace: about 35 seconds.
 
----
+## Verified Results
+
+Latest reproduced pipeline run:
+
+- Data: 49 large-cap US equities after filtering
+- Period: 2015-01-05 to 2024-12-30
+- Trading days: 2,514
+- PCA components: 10
+- PCA variance explained: 67.12%
+- PCA regression mean R-squared: 67.0%
+- Classical factor regression mean R-squared: 19.7%
+- Regime types analyzed: volatility, market, crisis
+
+### PCA Factor Performance
+
+| Factor | Annual Return | Volatility | Sharpe |
+|---|---:|---:|---:|
+| PC1 | -98.99% | 107.57% | -0.92 |
+| PC2 | -31.90% | 53.92% | -0.59 |
+| PC6 | 15.58% | 25.11% | 0.62 |
+| PC10 | 26.29% | 36.75% | 0.72 |
+
+Interpretation: the first PCs explain risk, but they are not guaranteed to earn
+premia. This is expected in a PCA risk model.
+
+### Classical Factor Performance
+
+| Factor | Annual Return | Volatility | Sharpe | Max Drawdown |
+|---|---:|---:|---:|---:|
+| Quality | 60.16% | 13.53% | 4.45 | -9.49% |
+| Size | 3.18% | 9.24% | 0.34 | -20.75% |
+| Momentum | 1.75% | 14.14% | 0.12 | -29.83% |
+| LowVol | -6.55% | 17.78% | -0.37 | -59.02% |
+| Value | -41.36% | 14.48% | -2.86 | -98.61% |
+
+Interpretation: the quality proxy dominates in this sample, while value performs
+poorly. This should be presented as sample evidence, not as a universal claim.
 
 ## Project Structure
 
-```
-.
-├── analysis/
-│   └── run_full_pipeline.py         # Main execution script (single command)
-├── src/
-│   ├── data_pipeline.py             # Data acquisition and preprocessing
-│   ├── pca_model.py                 # PCA factor extraction (advanced methodology)
-│   ├── factor_construction.py       # Classical factors (momentum, value, etc.)
-│   ├── regression.py                # Time-series and cross-sectional regressions
-│   ├── regime_analysis.py           # Regime-dependent performance analysis
-│   ├── portfolio_controls.py        # Risk management and volatility targeting
-│   ├── visualization.py             # Publication-quality plots
-│   └── utils.py                     # Utility functions
-├── config/
-│   └── config.yaml                  # All parameters (data, factors, regimes)
-├── tests/
-│   └── test_installation.py         # Installation verification
-├── reports/
-│   ├── PROJECT_OVERVIEW.md          # Technical walkthrough
-│   ├── RESEARCH_REPORT.md           # Research memo with results
-│   ├── INTERVIEW_DEFENSE.md         # Q&A for interviews
-│   ├── RESULTS_GUIDE.md             # How to interpret outputs
-│   ├── PCA_FACTOR_INTERPRETATION.md # Deep dive on PCA methodology
-│   └── Advanced_UPGRADE_SUMMARY.md     # Summary of methodological fixes
-├── data/                            # Data storage
-├── results/                         # Analysis outputs (CSV, JSON)
-├── plots/                           # Visualizations (PNG)
-└── logs/                            # Execution logs
+```text
+analysis/run_full_pipeline.py        End-to-end research pipeline
+src/data_pipeline.py                 Data download, cleaning, diagnostics
+src/pca_model.py                     PCA extraction and eigen-portfolios
+src/factor_construction.py           Momentum, value, size, quality, low-vol
+src/regression.py                    Factor betas, alphas, R-squared outputs
+src/regime_analysis.py               Volatility, market, and crisis regimes
+src/portfolio_controls.py            Vol targeting and risk metrics
+src/visualization.py                 Publication-style charts
+tests/test_installation.py           Dependency, config, and import smoke tests
+reports/RESEARCH_REPORT.md           Longer research write-up
+reports/PCA_FACTOR_INTERPRETATION.md Methodology explanation
+reports/ATS_SCREENING_PACK.md        Resume bullets and interview defense
+results/                             CSV/JSON outputs
+plots/                               Generated figures
 ```
 
----
+## Methodology
 
-## Methodology Overview
+1. Download and clean the equity universe.
+2. Compute daily returns, excess returns, diagnostics, and market series.
+3. Standardize returns for PCA covariance estimation.
+4. Convert eigenvectors into eigen-portfolios.
+5. Apply eigen-portfolio weights to raw returns to compute economic factor
+   returns.
+6. Construct classical long-short factors.
+7. Run time-series regressions, risk-premia estimates, and residual diagnostics.
+8. Analyze factor behavior across volatility, market, and crisis regimes.
+9. Export results and plots.
 
-### advanced PCA Implementation
+## Interview Positioning
 
-**Critical Distinction:**
-1. **Covariance Estimation**: Perform PCA on standardized returns to extract correlation structure
-2. **Eigen-Portfolio Construction**: Use eigenvectors as portfolio weights
-3. **Factor Returns**: Apply weights to RAW excess returns (not standardized)
+Use this project for Quant Research, Data Science, and ML-for-finance screening.
+The strongest story is not "I found alpha with PCA." The strongest story is:
 
-**Why This Matters:**
-- Standardization for covariance ensures PCA captures correlation, not scale effects
-- Applying weights to raw returns preserves economic interpretation
-- Factor returns have meaningful magnitudes, allowing proper Sharpe ratio calculation
-- This is the standard approach in professional risk models
-
-**Common Pitfall Avoided:**
-Computing factor returns from standardized returns forces mean returns to ~0, producing NaN Sharpe ratios.
-
-### Classical Factors
-
-Five well-documented equity factors constructed as long-short portfolios:
-- **Momentum**: 6-month past returns (skip 1 month)
-- **Value**: Long-term price reversal
-- **Size**: Market cap proxy
-- **Quality**: Return stability (Sharpe ratio)
-- **Low-Vol**: Realized volatility
-
-### Factor Regression
-
-- **Time-Series**: Asset-level regressions to estimate factor loadings (betas)
-- **Cross-Sectional**: Fama-MacBeth regressions to estimate risk premia
-- **Robustness**: Newey-West HAC standard errors
-
-### Regime Analysis
-
-Three regime types analyzed:
-- **Volatility**: High/low based on realized volatility
-- **Market**: Bull/bear based on cumulative returns
-- **Crisis**: High volatility (>30%) or large drawdowns (>20%)
-
----
-
-## Key Results
-
-### PCA vs Classical Factors: A Critical Comparison
-
-**Statistical Factors (PCA):**
-- 10 components explain 67% of return variance
-- PC1: Sharpe = -0.92 (market factor in bear period)
-- PC2: Sharpe = 0.59 (sector rotation)
-- Mean R² in asset regressions: 67%
-- **Primary Use**: Risk decomposition, not alpha generation
-
-**Priced Factors (Classical):**
-- 5 factors explain 20% of return variance
-- Quality: Sharpe = 4.45 (strong risk-adjusted returns)
-- Momentum: Sharpe = 0.12
-- Mean R² in asset regressions: 20%
-- **Primary Use**: Alpha generation, factor timing
-
-### advanced Insight
-
-PCA factors maximize variance explained (risk modeling), while classical factors maximize risk-adjusted returns (alpha). The comparison is complementary, not competitive:
-
-- **PCA excels at**: Covariance modeling, portfolio hedging, risk attribution
-- **Classical excels at**: Return prediction, systematic strategies, smart beta
-
-### Factor Performance
-
-| Factor | Annual Return | Volatility | Sharpe | t-stat |
-|--------|--------------|-----------|--------|--------|
-| **Quality** | 90.5% | 22.4% | **4.05** | 12.75 |
-| Momentum | 7.5% | 23.4% | 0.32 | 1.01 |
-| Size | -29.4% | 25.3% | -1.17 | -3.67 |
-| LowVol | -13.0% | 23.7% | -0.55 | -1.73 |
-| Value | -63.5% | 23.3% | -2.73 | -8.60 |
-
-### Regime Findings
-
-- Quality and Low-Vol provide crisis protection
-- Momentum performs best in low-volatility regimes
-- Factor premia are highly regime-dependent
-- PCA factors show mixed regime behavior (expected for statistical factors)
-
----
-
-## Key Insights
-
-### Statistical vs Priced Factors
-
-**PCA Factors (Statistical):**
-- Capture covariance structure
-- Orthogonal by construction
-- May or may not earn premia
-- Used for risk decomposition
-
-**Classical Factors (Priced):**
-- Based on economic theory or empirical anomalies
-- Designed to capture risk premia
-- Not necessarily orthogonal
-- Used for alpha generation
-
-**Professional Use:**
-- Risk models (Barra, Axioma): Use PCA-derived factors
-- Alpha strategies (quantitative trading firms, quantitative trading firms): Use classical factors
-- Hybrid models: Combine both for comprehensive framework
-
----
+"I built a reproducible factor research pipeline that distinguishes risk
+decomposition from priced premia, verifies factor behavior with regressions and
+regime analysis, and reports negative or weak results honestly."
 
 ## Limitations
 
-1. **Data**: Uses synthetic demo data (Yahoo Finance limitations)
-2. **Universe**: Limited to 49 large-cap US equities
-3. **Sample Period**: 10 years (2015-2024) may not capture full market cycle
-4. **Factor Proxies**: Classical factors use price-based proxies (no fundamentals)
-5. **Static Loadings**: Factor betas assumed constant (can extend to dynamic)
-6. **Transaction Costs**: Simplified model (10 bps per trade)
-
----
-
-## Future Extensions
-
-**Immediate:**
-- Integrate fundamental data (Compustat, FactSet)
-- Implement Fama-French 5-factor model
-- Add macro factors (rates, credit, commodities)
-
-**Advanced:**
-- Dynamic factor models (time-varying loadings)
-- Non-linear factors (ICA, autoencoders)
-- Factor timing strategies
-- Portfolio optimization (mean-variance, risk parity)
-
-**Production:**
-- Real-time data feeds
-- Database integration (PostgreSQL, InfluxDB)
-- API endpoints (FastAPI)
-- Web dashboard (Streamlit, Dash)
-
----
+- Uses a limited large-cap equity universe rather than a full institutional
+  cross-section.
+- Classical factors use price-based proxies, not full fundamental datasets.
+- Factor definitions are static and should be walk-forward validated.
+- Transaction costs and capacity constraints are simplified.
+- The quality result is strong in-sample and should not be overclaimed.
 
 ## Documentation
 
-- **[PROJECT_OVERVIEW.md](reports/PROJECT_OVERVIEW.md)**: Technical walkthrough of all components
-- **[RESEARCH_REPORT.md](reports/RESEARCH_REPORT.md)**: Research memo with detailed results
-- **[INTERVIEW_DEFENSE.md](reports/INTERVIEW_DEFENSE.md)**: Q&A for technical interviews
-- **[RESULTS_GUIDE.md](reports/RESULTS_GUIDE.md)**: How to interpret outputs
-- **[PCA_FACTOR_INTERPRETATION.md](reports/PCA_FACTOR_INTERPRETATION.md)**: Deep dive on PCA methodology
+- [RESEARCH_REPORT.md](reports/RESEARCH_REPORT.md)
+- [PCA_FACTOR_INTERPRETATION.md](reports/PCA_FACTOR_INTERPRETATION.md)
+- [ATS_SCREENING_PACK.md](reports/ATS_SCREENING_PACK.md)
 
----
+## Verification
 
-## References
+```bash
+python -m pytest -q
+python -m compileall -q .
+python analysis/run_full_pipeline.py
+```
 
-1. **Connor, G., & Korajczyk, R. A. (1988).** Risk and return in an equilibrium APT. *Journal of Financial Economics*, 21(2), 255-289.
+Latest local verification: 4 tests passed and the full pipeline completed.
 
-2. **Fama, E. F., & French, K. R. (1993).** Common risk factors in the returns on stocks and bonds. *Journal of Financial Economics*, 33(1), 3-56.
+## Disclaimer
 
-3. **Lettau, M., & Pelger, M. (2020).** Factors that fit the time series and cross-section of stock returns. *Review of Financial Studies*, 33(5), 2274-2325.
-
----
-
-## License
-
-MIT License - For educational and research purposes only.
-
-**Disclaimer:** This is a research project. Not investment advice. Past performance does not guarantee future results.
-
----
-
-**Status**: Production-Ready | **Version**: 1.0 (Final)  
-**Author**: Quantitative Research  
-**Contact**: For questions about methodology or implementation
+This project is for research, education, and interview demonstration. It is not
+investment advice and is not a live-trading system.
