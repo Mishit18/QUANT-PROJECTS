@@ -5,23 +5,29 @@ from typing import Tuple
 
 def sharpe_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
     """Annualized Sharpe."""
+    returns = returns.dropna()
     if len(returns) < 2:
         return np.nan
-    return returns.mean() / returns.std() * np.sqrt(periods_per_year)
+    vol = returns.std()
+    if vol <= 1e-12:
+        return np.nan
+    return returns.mean() / vol * np.sqrt(periods_per_year)
 
 
 def sortino_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
     """Annualized Sortino."""
+    returns = returns.dropna()
     if len(returns) < 2:
         return np.nan
     downside = returns[returns < 0].std()
-    if downside < 1e-8:
+    if downside <= 1e-12 or not np.isfinite(downside):
         return np.nan
     return returns.mean() / downside * np.sqrt(periods_per_year)
 
 
 def max_drawdown(cumulative_returns: pd.Series) -> float:
     """Maximum drawdown from peak."""
+    cumulative_returns = cumulative_returns.dropna()
     if len(cumulative_returns) < 2:
         return np.nan
     running_max = cumulative_returns.expanding().max()
@@ -50,9 +56,13 @@ def information_coefficient(predictions: pd.Series, returns: pd.Series,
 
 def ic_ir(ic_series: pd.Series) -> float:
     """Information ratio of IC time series."""
+    ic_series = ic_series.dropna()
     if len(ic_series) < 2:
         return np.nan
-    return ic_series.mean() / ic_series.std()
+    std = ic_series.std()
+    if std <= 1e-12:
+        return np.nan
+    return ic_series.mean() / std
 
 
 def hit_rate(predictions: pd.Series, returns: pd.Series) -> float:

@@ -24,7 +24,11 @@ class BacktestEngine:
         
     def run(self, predictions: pd.DataFrame, returns: pd.DataFrame, 
             volumes: pd.DataFrame) -> Dict[str, pd.Series]:
-        """Execute backtest."""
+        """Execute backtest with next-period return alignment."""
+        self.weights_history = []
+        self.returns_history = []
+        self.costs_history = []
+
         if len(predictions) == 0 or predictions.empty:
             return {
                 'returns': pd.Series(dtype=float),
@@ -32,7 +36,7 @@ class BacktestEngine:
                 'costs': pd.Series(dtype=float)
             }
         
-        dates = predictions.index.intersection(returns.index)
+        dates = predictions.index.intersection(returns.index).sort_values()
         
         if len(dates) == 0:
             return {
@@ -42,35 +46,34 @@ class BacktestEngine:
             }
         
         prev_weights = pd.Series(0.0, index=predictions.columns)
-        equity_curve = []
         
         for i, date in enumerate(dates):
-            if i % self.rebalance_freq != 0 and i > 0:
+            date_idx = returns.index.get_loc(date)
+            if not isinstance(date_idx, (int, np.integer)) or date_idx + 1 >= len(returns.index):
                 continue
-            
-            alpha = predictions.loc[date]
-            target_weights = self.portfolio.construct_weights(alpha, method='rank')
-            
-            if i > 0:
+
+            if i % self.rebalance_freq == 0:
+                alpha = predictions.loc[date]
+                target_weights = self.portfolio.construct_weights(alpha, method='rank')
+
                 costs = compute_total_costs(
                     prev_weights, target_weights, 
                     volumes.loc[date] if date in volumes.index else pd.Series(),
                     self.tcost_bps, self.slippage_bps
                 )
-                self.costs_history.append((date, costs))
+                prev_weights = target_weights
             else:
                 costs = 0.0
-            
-            forward_ret = returns.loc[date] if date in returns.index else pd.Series(0.0, index=target_weights.index)
-            
-            common_idx = target_weights.index.intersection(forward_ret.index)
-            portfolio_ret = (target_weights[common_idx] * forward_ret[common_idx]).sum() - costs
-            
-            self.weights_history.append((date, target_weights))
+
+            next_date = returns.index[date_idx + 1]
+            forward_ret = returns.loc[next_date]
+
+            common_idx = prev_weights.index.intersection(forward_ret.index)
+            portfolio_ret = (prev_weights[common_idx] * forward_ret[common_idx]).sum() - costs
+
+            self.weights_history.append((date, prev_weights.copy()))
             self.returns_history.append((date, portfolio_ret))
-            
-            prev_weights = target_weights
-            equity_curve.append((date, portfolio_ret))
+            self.costs_history.append((date, costs))
         
         return {
             'returns': pd.Series(dict(self.returns_history)),

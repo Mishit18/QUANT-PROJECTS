@@ -18,29 +18,32 @@ class XGBoostModel:
             'reg_alpha': 0.1,
             'reg_lambda': 1.0,
             'n_estimators': 100,
+            'tree_method': 'hist',
+            'n_jobs': -1,
             'random_state': 42
         }
-        self.params = params if params else default_params
+        self.params = {**default_params, **(params or {})}
         self.model = None
+        self.feature_names = None
         
     def fit(self, X: pd.DataFrame, y: pd.Series):
         """Fit XGBoost model."""
-        X_filled = X.fillna(0)
         valid = y.notna()
         if valid.sum() < 50:
             return
         
+        self.feature_names = X.columns
         self.model = xgb.XGBRegressor(**self.params)
-        self.model.fit(X_filled[valid], y[valid], verbose=False)
+        self.model.fit(X.loc[valid], y[valid], verbose=False)
     
     def predict(self, X: pd.DataFrame) -> pd.Series:
         """Predict with XGBoost."""
         if self.model is None:
             return pd.Series(np.nan, index=X.index)
         
-        X_filled = X.fillna(0)
         predictions = pd.Series(np.nan, index=X.index)
-        predictions[:] = self.model.predict(X_filled)
+        X = X.reindex(columns=self.feature_names) if self.feature_names is not None else X
+        predictions[:] = self.model.predict(X)
         return predictions
     
     def get_feature_importance(self) -> pd.Series:
@@ -48,7 +51,7 @@ class XGBoostModel:
         if self.model is None:
             return pd.Series()
         importance = self.model.feature_importances_
-        return pd.Series(importance)
+        return pd.Series(importance, index=self.feature_names)
 
 
 class RankXGBoost:
@@ -63,9 +66,11 @@ class RankXGBoost:
             'colsample_bytree': 0.8,
             'min_child_weight': 5,
             'n_estimators': 100,
+            'tree_method': 'hist',
+            'n_jobs': -1,
             'random_state': 42
         }
-        self.params = params if params else default_params
+        self.params = {**default_params, **(params or {})}
         self.model = None
         
     def fit(self, X: pd.DataFrame, y: pd.Series):

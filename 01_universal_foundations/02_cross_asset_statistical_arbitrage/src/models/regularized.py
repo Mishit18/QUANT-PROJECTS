@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import Ridge, Lasso, ElasticNet
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from typing import Optional
 
@@ -11,7 +12,9 @@ class RegularizedModel:
     def __init__(self, model_type: str = 'ridge', alpha: float = 1.0, l1_ratio: float = 0.5):
         self.model_type = model_type
         self.alpha = alpha
+        self.imputer = SimpleImputer(strategy='median', keep_empty_features=True)
         self.scaler = StandardScaler()
+        self.feature_names = None
         
         if model_type == 'ridge':
             self.model = Ridge(alpha=alpha)
@@ -24,25 +27,27 @@ class RegularizedModel:
     
     def fit(self, X: pd.DataFrame, y: pd.Series):
         """Fit with standardization."""
-        X_filled = X.fillna(0)
         valid = y.notna()
         if valid.sum() < 20:
             return
         
-        X_scaled = self.scaler.fit_transform(X_filled[valid])
+        self.feature_names = X.columns
+        X_filled = self.imputer.fit_transform(X.loc[valid])
+        X_scaled = self.scaler.fit_transform(X_filled)
         self.model.fit(X_scaled, y[valid])
     
     def predict(self, X: pd.DataFrame) -> pd.Series:
         """Predict with standardization."""
-        X_filled = X.fillna(0)
         predictions = pd.Series(np.nan, index=X.index)
+        X = X.reindex(columns=self.feature_names) if self.feature_names is not None else X
+        X_filled = self.imputer.transform(X)
         X_scaled = self.scaler.transform(X_filled)
         predictions[:] = self.model.predict(X_scaled)
         return predictions
     
     def get_feature_importance(self) -> pd.Series:
         """Coefficient magnitudes."""
-        return pd.Series(np.abs(self.model.coef_))
+        return pd.Series(np.abs(self.model.coef_), index=self.feature_names)
 
 
 class AdaptiveLasso:

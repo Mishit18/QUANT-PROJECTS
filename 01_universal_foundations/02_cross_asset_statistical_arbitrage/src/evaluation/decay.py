@@ -9,7 +9,7 @@ def compute_alpha_decay(predictions: pd.DataFrame, returns: pd.DataFrame,
     decay_ics = {}
     
     for h in horizons:
-        forward_returns = returns.shift(-h)
+        forward_returns = (1 + returns).rolling(h).apply(np.prod, raw=True).shift(-h) - 1
         
         ic_list = []
         common_dates = predictions.index.intersection(forward_returns.index)
@@ -34,7 +34,7 @@ def compute_cumulative_returns_by_horizon(predictions: pd.DataFrame, returns: pd
     cum_returns = {}
     
     for h in horizons:
-        forward_returns = returns.rolling(h).sum().shift(-h)
+        forward_returns = (1 + returns).rolling(h).apply(np.prod, raw=True).shift(-h) - 1
         
         long_short = []
         common_dates = predictions.index.intersection(forward_returns.index)

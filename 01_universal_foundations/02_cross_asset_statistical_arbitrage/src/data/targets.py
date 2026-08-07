@@ -23,10 +23,32 @@ def cross_sectional_rank(returns: pd.DataFrame, scale: float = 1.0) -> pd.DataFr
     return returns.apply(rank_row, axis=1)
 
 
-def volatility_scaled_returns(returns: pd.DataFrame, vol_window: int = 20) -> pd.DataFrame:
-    """Scale returns by trailing realized volatility."""
-    vol = returns.rolling(vol_window).std()
-    return returns / vol.replace(0, np.nan)
+def volatility_scaled_returns(
+    forward_returns: pd.DataFrame,
+    trailing_returns: Optional[pd.DataFrame] = None,
+    vol_window: int = 20,
+    horizon: int = 1,
+    min_periods: Optional[int] = None,
+) -> pd.DataFrame:
+    """Scale forward returns by volatility known at the signal date.
+
+    If daily trailing returns are supplied, the denominator is the trailing
+    daily realized volatility scaled to the prediction horizon. If not, fall
+    back to lagged forward returns so the current target does not enter its
+    own volatility estimate.
+    """
+    if min_periods is None:
+        min_periods = min(vol_window, max(5, vol_window // 2))
+
+    if trailing_returns is None:
+        vol_source = forward_returns.shift(horizon)
+        horizon_scale = 1.0
+    else:
+        vol_source = trailing_returns
+        horizon_scale = np.sqrt(max(horizon, 1))
+
+    vol = vol_source.rolling(vol_window, min_periods=min_periods).std() * horizon_scale
+    return forward_returns / vol.replace(0, np.nan)
 
 
 def residualized_returns(returns: pd.DataFrame, market_returns: pd.Series, 
@@ -62,11 +84,17 @@ def construct_targets(prices: pd.DataFrame, config: dict,
     vol_window = config['targets'].get('vol_window', 20)
     
     forward_returns = compute_forward_returns(prices, horizon)
+    trailing_returns = prices.pct_change(fill_method=None)
     
     if method == 'rank':
         targets = cross_sectional_rank(forward_returns, scale=rank_scale)
     elif method == 'vol_scaled':
-        targets = volatility_scaled_returns(forward_returns, vol_window)
+        targets = volatility_scaled_returns(
+            forward_returns,
+            trailing_returns=trailing_returns,
+            vol_window=vol_window,
+            horizon=horizon,
+        )
     elif method == 'residualized':
         if market_returns is None:
             market_returns = forward_returns.mean(axis=1)
@@ -86,8 +114,8 @@ def construct_targets(prices: pd.DataFrame, config: dict,
         'mean_cs_valid': targets.notna().sum(axis=1).mean(),
         'target_min': targets.min().min(),
         'target_max': targets.max().max(),
-        'target_mean': targets.mean().mean(),
-        'target_std': targets.std().std()
+        'target_mean': targets.stack().mean(),
+        'target_std': targets.stack().std()
     }
     
     return targets, stats

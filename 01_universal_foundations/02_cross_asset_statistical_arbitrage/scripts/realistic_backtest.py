@@ -3,6 +3,7 @@ from pathlib import Path
 import yaml
 import pandas as pd
 import numpy as np
+from copy import deepcopy
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -236,7 +237,7 @@ def main():
     print("[1] BASELINE: No Neutralization, No Costs")
     print("=" * 70)
     
-    config_nocost = config.copy()
+    config_nocost = deepcopy(config)
     config_nocost['backtest']['tcost_bps'] = 0.0
     
     results_baseline = run_realistic_backtest(predictions, returns, config_nocost, 
@@ -356,24 +357,24 @@ def main():
     print("=" * 70)
     
     if sharpe_realistic > 1.0:
-        print("✓ SIGNAL IS TRADABLE: Sharpe > 1.0 after costs")
-        print("  → Alpha survives realistic trading constraints")
-        print("  → Suitable for live trading")
+        print("[PASS] SIGNAL IS RESEARCH-POSITIVE: Sharpe > 1.0 after costs")
+        print("  -> Alpha survives synthetic trading constraints")
+        print("  -> Still requires real market validation before deployment")
     elif sharpe_realistic > 0.5:
-        print("⚠ SIGNAL IS MARGINAL: Sharpe 0.5-1.0 after costs")
-        print("  → Alpha partially survives constraints")
-        print("  → May be tradable with optimization")
+        print("[WARN] SIGNAL IS MARGINAL: Sharpe 0.5-1.0 after costs")
+        print("  -> Alpha partially survives constraints")
+        print("  -> May be worth real-data validation, not live trading")
     else:
-        print("✗ SIGNAL IS NOT TRADABLE: Sharpe < 0.5 after costs")
-        print("  → Alpha does not survive constraints")
-        print("  → Requires fundamental redesign")
+        print("[FAIL] SIGNAL IS NOT TRADABLE: Sharpe < 0.5 after costs")
+        print("  -> Alpha does not survive constraints")
+        print("  -> Requires fundamental redesign")
     
     if sharpe_retention > 80:
-        print(f"\n✓ LOW DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
+        print(f"\n[PASS] LOW DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
     elif sharpe_retention > 50:
-        print(f"\n⚠ MODERATE DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
+        print(f"\n[WARN] MODERATE DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
     else:
-        print(f"\n✗ HIGH DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
+        print(f"\n[FAIL] HIGH DEGRADATION: {sharpe_retention:.0f}% Sharpe retention")
     
     print("\n" + "=" * 70)
     

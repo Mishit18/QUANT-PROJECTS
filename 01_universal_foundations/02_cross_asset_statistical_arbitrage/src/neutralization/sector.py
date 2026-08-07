@@ -5,23 +5,15 @@ from typing import Dict
 
 def neutralize_sector(alpha: pd.DataFrame, sector_map: Dict[str, str]) -> pd.DataFrame:
     """Remove sector exposure from alpha."""
-    sector_series = pd.Series(sector_map)
     neutralized = alpha.copy()
-    
-    for date in alpha.index:
-        alpha_row = alpha.loc[date]
-        
-        for sector in sector_series.unique():
-            sector_tickers = sector_series[sector_series == sector].index
-            sector_tickers = sector_tickers.intersection(alpha_row.index)
-            
-            if len(sector_tickers) > 1:
-                sector_alpha = alpha_row[sector_tickers]
-                valid = sector_alpha.notna()
-                if valid.sum() > 1:
-                    sector_mean = sector_alpha[valid].mean()
-                    neutralized.loc[date, sector_tickers] = sector_alpha - sector_mean
-    
+    sector_series = pd.Series(sector_map).reindex(alpha.columns)
+
+    for sector in sector_series.dropna().unique():
+        sector_tickers = sector_series[sector_series == sector].index.intersection(alpha.columns)
+        if len(sector_tickers) > 1:
+            sector_alpha = alpha[sector_tickers]
+            neutralized[sector_tickers] = sector_alpha.sub(sector_alpha.mean(axis=1), axis=0)
+
     return neutralized
 
 

@@ -5,10 +5,10 @@ import numpy as np
 def compute_transaction_costs(weights_prev: pd.Series, weights_curr: pd.Series, 
                               tcost_bps: float = 7.5) -> float:
     """Linear transaction cost model."""
-    common = weights_prev.index.intersection(weights_curr.index)
+    common = weights_prev.index.union(weights_curr.index)
     
-    w_prev = weights_prev[common].fillna(0)
-    w_curr = weights_curr[common].fillna(0)
+    w_prev = weights_prev.reindex(common, fill_value=0).fillna(0)
+    w_curr = weights_curr.reindex(common, fill_value=0).fillna(0)
     
     turnover = (w_prev - w_curr).abs().sum() / 2
     return turnover * tcost_bps / 10000
@@ -17,15 +17,23 @@ def compute_transaction_costs(weights_prev: pd.Series, weights_curr: pd.Series,
 def compute_slippage(weights_prev: pd.Series, weights_curr: pd.Series,
                     volumes: pd.Series, slippage_bps: float = 2.5) -> float:
     """Volume-dependent slippage."""
-    common = weights_prev.index.intersection(weights_curr.index).intersection(volumes.index)
+    if volumes is None or len(volumes) == 0:
+        return 0.0
+
+    common = weights_prev.index.union(weights_curr.index).intersection(volumes.index)
+    if len(common) == 0:
+        return 0.0
     
-    w_prev = weights_prev[common].fillna(0)
-    w_curr = weights_curr[common].fillna(0)
+    w_prev = weights_prev.reindex(common, fill_value=0).fillna(0)
+    w_curr = weights_curr.reindex(common, fill_value=0).fillna(0)
     vol = volumes[common].fillna(volumes[common].median())
+    median_vol = vol.median()
+    if not np.isfinite(median_vol) or median_vol <= 0:
+        return 0.0
     
     trade_size = (w_prev - w_curr).abs()
     
-    vol_normalized = vol / vol.median()
+    vol_normalized = vol / median_vol
     slippage_factor = 1.0 / np.sqrt(vol_normalized)
     
     total_slippage = (trade_size * slippage_factor).sum() * slippage_bps / 10000

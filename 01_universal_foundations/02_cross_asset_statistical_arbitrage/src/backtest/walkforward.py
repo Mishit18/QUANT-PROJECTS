@@ -14,6 +14,20 @@ class WalkForwardValidator:
         self.train_window = config['models']['train_window']
         self.test_window = config['models']['test_window']
         self.retrain_freq = config['models']['retrain_freq']
+        self.embargo = config['models'].get('embargo', config.get('targets', {}).get('horizon', 0))
+        self.min_train_samples = config['models'].get('min_train_samples', 50)
+
+    @staticmethod
+    def _coerce_targets(targets: pd.DataFrame) -> pd.Series:
+        if isinstance(targets, pd.Series):
+            return targets
+        if targets.shape[1] == 1:
+            return targets.iloc[:, 0]
+        if targets.index.nlevels == 1:
+            stacked = targets.stack()
+            stacked.name = 'target'
+            return stacked
+        raise ValueError("Multi-column targets must be wide date x asset data.")
         
     def validate(self, features: pd.DataFrame, targets: pd.DataFrame, 
                 model_type: str = 'xgboost') -> Dict[str, pd.DataFrame]:
@@ -31,20 +45,22 @@ class WalkForwardValidator:
         predictions = []
         test_ics = []
         
-        # Convert targets to Series if DataFrame
-        if isinstance(targets, pd.DataFrame):
-            targets = targets.iloc[:, 0]
+        targets = self._coerce_targets(targets)
         
         # Align features and targets
         common_idx = features.index.intersection(targets.index)
-        features = features.loc[common_idx]
+        features = features.loc[common_idx].replace([np.inf, -np.inf], np.nan)
         targets = targets.loc[common_idx]
         
         dates = features.index.get_level_values(0).unique() if features.index.nlevels > 1 else features.index.unique()
         
         for i in range(self.train_window, len(dates), self.retrain_freq):
-            train_dates = dates[max(0, i - self.train_window):i]
+            train_end = max(0, i - self.embargo)
+            train_dates = dates[max(0, train_end - self.train_window):train_end]
             test_dates = dates[i:min(i + self.test_window, len(dates))]
+
+            if len(train_dates) == 0 or len(test_dates) == 0:
+                continue
             
             if features.index.nlevels > 1:
                 X_train = features.loc[train_dates]
@@ -60,7 +76,7 @@ class WalkForwardValidator:
             # Require at least 20% of features to be non-NaN
             valid_train = (X_train.notna().sum(axis=1) > X_train.shape[1] * 0.2) & y_train.notna()
             
-            if valid_train.sum() < 50:
+            if valid_train.sum() < self.min_train_samples:
                 continue
             
             model.fit(X_train[valid_train], y_train[valid_train])

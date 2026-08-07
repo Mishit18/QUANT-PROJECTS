@@ -5,23 +5,12 @@ from typing import Tuple
 
 def compute_market_beta(returns: pd.DataFrame, market_returns: pd.Series, window: int = 252) -> pd.DataFrame:
     """Rolling market beta estimation."""
-    betas = pd.DataFrame(index=returns.index, columns=returns.columns)
-    
-    for col in returns.columns:
-        asset_ret = returns[col]
-        valid = asset_ret.notna() & market_returns.notna()
-        
-        for i in range(window, len(returns)):
-            window_slice = slice(i - window, i)
-            y = asset_ret.iloc[window_slice][valid.iloc[window_slice]]
-            x = market_returns.iloc[window_slice][valid.iloc[window_slice]]
-            
-            if len(y) > window // 2:
-                cov = np.cov(x, y)[0, 1]
-                var = np.var(x)
-                betas.iloc[i, betas.columns.get_loc(col)] = cov / var if var > 0 else np.nan
-    
-    return betas
+    aligned_market = market_returns.reindex(returns.index)
+    min_periods = max(window // 2, 20)
+    market_var = aligned_market.rolling(window, min_periods=min_periods).var()
+    cov = returns.rolling(window, min_periods=min_periods).cov(aligned_market)
+    betas = cov.div(market_var.replace(0, np.nan), axis=0)
+    return betas.astype(float)
 
 
 def neutralize_market_beta(alpha: pd.DataFrame, returns: pd.DataFrame, 
@@ -37,7 +26,11 @@ def neutralize_market_beta(alpha: pd.DataFrame, returns: pd.DataFrame,
             
             valid = alpha_row.notna() & beta_row.notna()
             if valid.sum() > 10:
-                market_exposure = (alpha_row[valid] * beta_row[valid]).sum() / beta_row[valid].abs().sum()
+                beta = beta_row[valid].astype(float)
+                denom = float(beta @ beta)
+                if denom <= 1e-12:
+                    continue
+                market_exposure = float(alpha_row[valid] @ beta) / denom
                 neutralized.loc[date] = alpha_row - beta_row * market_exposure
     
     return neutralized

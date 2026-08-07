@@ -26,7 +26,7 @@ def build_panel(ohlcv_dict: Dict[str, pd.DataFrame], field: str = 'close') -> pd
 
 def forward_fill_limited(df: pd.DataFrame, limit: int = 5) -> pd.DataFrame:
     """Forward fill with max gap limit."""
-    return df.fillna(method='ffill', limit=limit)
+    return df.ffill(limit=limit)
 
 
 def filter_universe(prices: pd.DataFrame, volumes: pd.DataFrame,
@@ -40,7 +40,7 @@ def filter_universe(prices: pd.DataFrame, volumes: pd.DataFrame,
 
 def compute_returns(prices: pd.DataFrame, periods: int = 1) -> pd.DataFrame:
     """Simple returns over N periods."""
-    return prices.pct_change(periods)
+    return prices.pct_change(periods, fill_method=None)
 
 
 def compute_log_returns(prices: pd.DataFrame, periods: int = 1) -> pd.DataFrame:

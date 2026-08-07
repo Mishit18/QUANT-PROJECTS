@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
 from typing import Tuple
 
 
@@ -9,22 +10,26 @@ class CrossSectionalOLS:
     
     def __init__(self):
         self.model = LinearRegression(fit_intercept=True)
+        self.imputer = SimpleImputer(strategy='median', keep_empty_features=True)
         self.coefs = []
+        self.feature_names = None
         
     def fit(self, X: pd.DataFrame, y: pd.Series):
         """Fit on single cross-section."""
-        X_filled = X.fillna(0)
         valid = y.notna()
         if valid.sum() < 10:
             return
         
-        self.model.fit(X_filled[valid], y[valid])
+        self.feature_names = X.columns
+        X_filled = self.imputer.fit_transform(X.loc[valid])
+        self.model.fit(X_filled, y[valid])
         self.coefs.append(self.model.coef_)
         
     def predict(self, X: pd.DataFrame) -> pd.Series:
         """Predict on cross-section."""
-        X_filled = X.fillna(0)
         predictions = pd.Series(np.nan, index=X.index)
+        X = X.reindex(columns=self.feature_names) if self.feature_names is not None else X
+        X_filled = self.imputer.transform(X)
         predictions[:] = self.model.predict(X_filled)
         return predictions
     
@@ -33,7 +38,7 @@ class CrossSectionalOLS:
         if not self.coefs:
             return pd.Series()
         coef_array = np.array(self.coefs)
-        return pd.Series(np.abs(coef_array).mean(axis=0))
+        return pd.Series(np.abs(coef_array).mean(axis=0), index=self.feature_names)
 
 
 class RollingOLS:

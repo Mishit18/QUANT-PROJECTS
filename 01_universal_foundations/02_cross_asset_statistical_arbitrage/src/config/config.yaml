@@ -21,6 +21,8 @@ models:
   train_window: 252
   test_window: 21
   retrain_freq: 21
+  embargo: 5
+  min_train_samples: 50
   
 backtest:
   long_short: true
@@ -28,7 +30,7 @@ backtest:
   vol_target: 0.10
   tcost_bps: 7.5
   slippage_bps: 2.5
-  rebalance_freq: 1
+  rebalance_freq: 5
   
 neutralization:
   market_beta: true

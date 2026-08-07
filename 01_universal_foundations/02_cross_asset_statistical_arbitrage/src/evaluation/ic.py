@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Tuple
+from scipy import stats
 
 
 def compute_ic_series(predictions: pd.DataFrame, returns: pd.DataFrame, 
@@ -24,13 +25,22 @@ def compute_ic_series(predictions: pd.DataFrame, returns: pd.DataFrame,
 
 def compute_ic_statistics(ic_series: pd.Series) -> dict:
     """IC summary statistics."""
+    ic_series = ic_series.dropna()
+    std_ic = ic_series.std()
+    n_obs = len(ic_series)
+    t_stat = ic_series.mean() / (std_ic / np.sqrt(n_obs)) if n_obs > 1 and std_ic > 0 else np.nan
+    p_value = 2 * stats.t.sf(abs(t_stat), df=n_obs - 1) if np.isfinite(t_stat) else np.nan
+
     return {
         'mean_ic': ic_series.mean(),
-        'std_ic': ic_series.std(),
-        'ic_ir': ic_series.mean() / ic_series.std() if ic_series.std() > 0 else np.nan,
+        'std_ic': std_ic,
+        'ic_ir': ic_series.mean() / std_ic if std_ic > 0 else np.nan,
         'hit_rate': (ic_series > 0).mean(),
         'skew': ic_series.skew(),
-        'kurtosis': ic_series.kurtosis()
+        'kurtosis': ic_series.kurtosis(),
+        't_stat': t_stat,
+        'p_value': p_value,
+        'n_obs': n_obs
     }
 
 

@@ -240,7 +240,7 @@ def main():
     print("HORIZON-MATCHED BACKTEST (5-day rebalancing)")
     print("=" * 70)
     print("Note: Neutralization skipped for computational efficiency")
-    print("(Already validated separately with IC improvement to 0.1721)")
+    print("(Use realistic_backtest.py for neutralized, costed validation)")
     
     results_matched = run_horizon_matched_backtest(predictions, returns, config, 
                                                    rebalance_freq=5,
@@ -277,17 +277,22 @@ def main():
     subperiods_matched = analyze_subperiods(ret_matched, n_periods=4)
     print("\n" + subperiods_matched.to_string(index=False))
     
-    # Load previous daily-rebalanced results for comparison
+    # Daily-rebalanced comparison with the same portfolio construction
     print("\n" + "=" * 70)
     print("COMPARISON: DAILY vs HORIZON-MATCHED")
     print("=" * 70)
     
-    # Previous daily results (from realistic_backtest.py)
-    sharpe_daily = -0.23
-    sortino_daily = -0.05
-    return_daily = -0.0182
-    mdd_daily = -0.0240
-    turnover_daily = 0.0041
+    results_daily = run_horizon_matched_backtest(
+        predictions, returns, config,
+        rebalance_freq=1,
+        neutralize_risks=False
+    )
+    ret_daily = results_daily['returns']
+    sharpe_daily = sharpe_ratio(ret_daily)
+    sortino_daily = sortino_ratio(ret_daily)
+    return_daily = (1 + ret_daily).prod() - 1
+    mdd_daily = max_drawdown((1 + ret_daily).cumprod())
+    turnover_daily = results_daily['turnover'].mean()
     
     print(f"\n{'Metric':<20s} {'Daily (1d)':<12s} {'Matched (5d)':<12s} {'Change':<12s}")
     print("-" * 70)
@@ -324,7 +329,7 @@ def main():
         print("The signal predicts 5-day returns, and holding for 5 days allows")
         print("the prediction to realize. Daily rebalancing was cutting positions")
         print("before the signal could materialize, destroying alpha.")
-        print("\nCONCLUSION: Signal is tradable with correct execution horizon.")
+        print("\nCONCLUSION: Signal improves with correct execution horizon.")
         
     elif sharpe_matched > sharpe_daily and sharpe_matched > 0:
         print("PARTIAL IMPROVEMENT")
@@ -341,8 +346,8 @@ def main():
         
     else:
         print("NO MATERIAL IMPROVEMENT")
-        print(f"\nSharpe: {sharpe_daily:.2f} → {sharpe_matched:.2f}")
-        print(f"Return: {return_daily:.2%} → {total_ret_matched:.2%}")
+        print(f"\nSharpe: {sharpe_daily:.2f} -> {sharpe_matched:.2f}")
+        print(f"Return: {return_daily:.2%} -> {total_ret_matched:.2%}")
         print("\nEXPLANATION:")
         print("Horizon-matching did not resolve the IC-to-PnL translation failure.")
         print("This indicates the problem is NOT execution timing.")
@@ -359,15 +364,15 @@ def main():
     print("=" * 70)
     
     print("\nThis completes the alpha research validation pipeline.")
-    print("\nValidated components:")
-    print("✓ Target engineering methodology")
-    print("✓ Risk neutralization framework")
-    print("✓ IC computation and stability analysis")
-    print("✓ Backtest infrastructure")
-    
-    if sharpe_matched > 0.5:
-        print("\nStrategy status: VALIDATED for live trading")
-        print("Next steps: Deploy with real market data")
+    print("\nChecked components:")
+    print("[OK] Target engineering methodology")
+    print("[OK] Risk neutralization framework")
+    print("[OK] IC computation and stability analysis")
+    print("[OK] Backtest infrastructure")
+
+    if sharpe_matched > 1.0:
+        print("\nStrategy status: HORIZON DIAGNOSTIC POSITIVE ON SYNTHETIC DATA")
+        print("Next steps: Confirm with realistic_backtest.py and real market data")
     else:
         print("\nStrategy status: NOT VALIDATED for live trading")
         print("Next steps: Requires real market data or fundamental redesign")

@@ -34,7 +34,7 @@ def main():
     volumes.to_parquet(processed_dir / 'volumes.parquet')
     returns.to_parquet(processed_dir / 'returns.parquet')
     
-    # Construct targets with proper cross-sectional ranking
+    # Construct targets with configured, point-in-time-safe conditioning.
     market_returns = returns.mean(axis=1)
     targets, target_stats = construct_targets(prices, config, market_returns)
     

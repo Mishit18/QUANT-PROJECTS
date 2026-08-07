@@ -4,6 +4,8 @@ Replace with actual data loader in production.
 """
 import pandas as pd
 import numpy as np
+import yaml
+import hashlib
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -14,17 +16,18 @@ def generate_synthetic_ohlcv(ticker: str, start_date: str, end_date: str,
     dates = pd.date_range(start_date, end_date, freq='B')
     n_days = len(dates)
     
-    np.random.seed(hash(ticker) % 2**32)
+    seed = int(hashlib.sha256(ticker.encode('utf-8')).hexdigest()[:8], 16)
+    rng = np.random.default_rng(seed)
     
-    returns = np.random.normal(0.0005, 0.02, n_days)
+    returns = rng.normal(0.0005, 0.02, n_days)
     prices = initial_price * np.exp(np.cumsum(returns))
     
     close = prices
-    open_prices = close * (1 + np.random.normal(0, 0.005, n_days))
-    high = np.maximum(open_prices, close) * (1 + np.abs(np.random.normal(0, 0.01, n_days)))
-    low = np.minimum(open_prices, close) * (1 - np.abs(np.random.normal(0, 0.01, n_days)))
+    open_prices = close * (1 + rng.normal(0, 0.005, n_days))
+    high = np.maximum(open_prices, close) * (1 + np.abs(rng.normal(0, 0.01, n_days)))
+    low = np.minimum(open_prices, close) * (1 - np.abs(rng.normal(0, 0.01, n_days)))
     
-    volume = np.random.lognormal(15, 1, n_days)
+    volume = rng.lognormal(15, 1, n_days)
     
     df = pd.DataFrame({
         'date': dates,
@@ -39,13 +42,18 @@ def generate_synthetic_ohlcv(ticker: str, start_date: str, end_date: str,
 
 
 def main():
+    config_path = Path('src/config/config.yaml')
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
     output_dir = Path('data/raw')
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    tickers = [f'TICK{i:03d}' for i in range(100)]
+    universe_size = config['data'].get('universe_size', 100)
+    tickers = [f'TICK{i:03d}' for i in range(universe_size)]
     
-    start_date = '2015-01-01'
-    end_date = '2024-12-31'
+    start_date = config['data'].get('start_date', '2015-01-01')
+    end_date = config['data'].get('end_date', '2024-12-31')
     
     print(f"Generating synthetic data for {len(tickers)} tickers...")
     
