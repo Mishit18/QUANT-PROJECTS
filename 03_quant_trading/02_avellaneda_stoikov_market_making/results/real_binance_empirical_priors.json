@@ -1,0 +1,16 @@
+{
+  "source": "Official Binance Vision BTCUSDT aggregate trades",
+  "date": "2026-08-15",
+  "trades": 185782,
+  "duration_seconds": 86399.29,
+  "trades_per_second": 2.1503,
+  "buyer_initiated_share": 0.56244,
+  "interarrival_p50_ms": 174.172,
+  "interarrival_p90_ms": 1329.127,
+  "trade_count_dispersion": 17.2365,
+  "one_second_volatility_bps": 0.10148,
+  "daily_realized_volatility_pct": 0.2983,
+  "quantity_p50_btc": 0.00095,
+  "quantity_p90_btc": 0.059049,
+  "signed_volume_autocorrelation_lag1": 0.10905
+}

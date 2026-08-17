@@ -25,6 +25,7 @@ Interview-grade implementation of the Avellaneda-Stoikov optimal market-making m
 - Multi-agent competition and spread compression.
 - Queue-position and microprice extensions for more realistic microstructure discussion.
 - Failure-mode analysis that explains when the model should not be trusted.
+- Real-market priors from 185,782 official Binance Vision trades for volatility, trade intensity, and size calibration, with simulated-fill boundaries stated explicitly.
 
 ## Quick Start
 
@@ -136,7 +137,7 @@ When multiple market makers quote the same process, spreads compress and mean Pn
 
 - Do not claim this is a production trading system.
 - Do not claim the strategy is live-tradeable.
-- Do not claim real exchange data calibration unless added later.
+- Do not claim exchange-validated fill probabilities; real trades calibrate market priors while fills and PnL remain simulated.
 - Do not report a single lucky path as performance.
 - Do not hide that results are simulated.
 

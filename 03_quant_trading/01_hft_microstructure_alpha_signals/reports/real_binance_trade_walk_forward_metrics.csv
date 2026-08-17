@@ -1,0 +1,2 @@
+dataset,bars,train_bars,validation_bars,test_bars,decision_threshold,accuracy,balanced_accuracy,roc_auc,active_signal_rate,mean_net_return_bps_per_active_signal,assumed_round_trip_cost_bps
+Binance Vision BTCUSDT aggregate trades,62691,37614,12538,12539,0.5,0.6222186777254964,0.5679975202638092,0.589715320876794,0.13095143153361513,-0.9728691056933325,1.0

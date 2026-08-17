@@ -2,7 +2,7 @@
 
 Research-grade limit order book microstructure project showing a central trading lesson: high directional accuracy does not automatically become profitable execution.
 
-The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection. A separate live Binance collector validates spread, depth-imbalance, and microprice feature definitions on public top-20 order-book snapshots without misrepresenting them as model-training data.
+The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection. Separate Binance benchmarks validate feature definitions on live top-20 order-book snapshots and test trade-flow signals on historical public aggregate trades without conflating either dataset with the synthetic LOB experiment.
 
 ## Executive Snapshot
 
@@ -55,6 +55,8 @@ The pipeline runs:
 7. Report and figure generation.
 
 The live collector writes timestamped snapshots and a JSON summary under `reports/`. It is feature-validation evidence only; the predictive backtest remains explicitly synthetic.
+
+Run `python scripts/run_real_binance_benchmark.py` for a chronological 60/20/20 train-validation-holdout benchmark on official Binance Vision BTCUSDT aggregate trades. The script exports holdout predictions, ROC-AUC, balanced accuracy, active-signal rate, and a deliberately conservative one-basis-point cost check.
 
 ### Committed live-market validation
 

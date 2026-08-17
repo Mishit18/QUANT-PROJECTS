@@ -14,6 +14,7 @@ This project is best positioned for quant research, quant trading, market micros
 - Inventory-aware market maker with reservation-price style quote skew.
 - Event-driven backtest with real agent fill detection.
 - Verified command-line demos and reproducible result summaries.
+- Empirical clustering priors from 185,782 official Binance Vision trades, including interarrival dispersion and signed-flow dependence.
 
 ## Verified Full Simulation
 
@@ -145,6 +146,7 @@ Do not overclaim:
 
 - This is a simulator, not a live market-making system.
 - The data is synthetic Hawkes-generated order flow.
+- Real aggregate trades calibrate arrival and clustering priors but cannot identify the six-event LOB kernel because they omit limit orders and cancellations.
 - MLE results are demonstration-level and should be strengthened before claiming production calibration.
 - Some KS diagnostics reject the configured model, which should be described as validation evidence, not hidden.
 

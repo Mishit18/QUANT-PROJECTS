@@ -14,6 +14,7 @@ It is designed for quant research and quant trader screening, especially roles t
 - Benchmarks against TWAP, VWAP, AC risk-neutral, and AC risk-averse policies.
 - Stress tests under liquidity collapse, volatility spike, impact regime shift, and liquidity shocks.
 - Reproducible smoke tests and CSV result exports.
+- Real-market stress priors from 185,782 official Binance Vision trades for volatility, trade intensity, and trade-size ranges.
 
 ## Important Result Convention
 
@@ -161,5 +162,6 @@ Do not overclaim:
 
 - This is not a live execution engine.
 - Results are simulator-based, not exchange-validated.
+- Real trades calibrate scenario ranges; market-impact coefficients and RL rewards remain simulation-based.
 - The cost sign convention is simulator-specific.
 - RL performance should be validated with real market data before production use.

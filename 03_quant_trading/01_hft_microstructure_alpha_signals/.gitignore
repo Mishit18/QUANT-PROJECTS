@@ -30,9 +30,11 @@ env/
 *.ipynb_checkpoints/
 
 # Data
+.cache/
 data/raw/*.parquet
 data/processed/*.parquet
 *.csv
+!reports/real_binance_trade_walk_forward_metrics.csv
 *.h5
 *.hdf5
 
