@@ -1,0 +1,15 @@
+{
+  "depth_snapshots": 1000,
+  "agg_trade_messages": 276,
+  "elapsed_seconds": 108.641,
+  "snapshot_rate_per_second": 9.2046,
+  "spread_bps_mean": 0.001577,
+  "spread_bps_p95": 0.001577,
+  "depth_imbalance_mean": 0.372288,
+  "depth_imbalance_stdev": 0.335975,
+  "microprice_deviation_bps_mean": 0.000221,
+  "data_scope": "live public Binance spot top-20 partial-book snapshots",
+  "limitation": "feature validation only; not a historical L2 training or execution dataset",
+  "symbol": "BTCUSDT",
+  "websocket_url": "wss://data-stream.binance.vision/stream?streams=btcusdt@depth20@100ms/btcusdt@aggTrade"
+}

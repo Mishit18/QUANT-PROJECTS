@@ -2,7 +2,7 @@
 
 Research-grade limit order book microstructure project showing a central trading lesson: high directional accuracy does not automatically become profitable execution.
 
-The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection.
+The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection. A separate live Binance collector validates spread, depth-imbalance, and microprice feature definitions on public top-20 order-book snapshots without misrepresenting them as model-training data.
 
 ## Executive Snapshot
 
@@ -19,6 +19,7 @@ The project predicts short-horizon price moves from synthetic full-depth LOB dat
 | EV-filtered PnL | +$0.41 on 1 trade |
 | Negative-EV signal filter rate | 94.6% |
 | Passive fill rate | 20.0% |
+| Real-market validation | Live Binance BTCUSDT top-20 snapshots |
 
 ## Core Insight
 
@@ -40,6 +41,7 @@ The model can classify short-horizon price moves well, but most signals are not 
 pip install -r requirements.txt
 python verify_installation.py
 python run_pipeline.py
+python scripts/collect_live_binance_lob.py --snapshots 1000
 ```
 
 The pipeline runs:
@@ -51,6 +53,14 @@ The pipeline runs:
 5. Alpha decay and regime analysis.
 6. Event-driven execution tests.
 7. Report and figure generation.
+
+The live collector writes timestamped snapshots and a JSON summary under `reports/`. It is feature-validation evidence only; the predictive backtest remains explicitly synthetic.
+
+### Committed live-market validation
+
+The latest public-data run collected `1,000` BTCUSDT top-20 snapshots and `276` aggregate-trade messages in `108.64` seconds through Binance's market-data-only WebSocket endpoint. It observed a mean depth imbalance of `0.3723` (standard deviation `0.3360`) and writes the raw snapshot features to `reports/live_binance_lob_snapshots.csv` with the reproducible summary in `reports/live_binance_lob_summary.json`.
+
+This evidence validates parsing and feature computation against a real order book. It does not convert the synthetic predictive experiment into a real-data backtest and is not presented as trading performance.
 
 ## Project Structure
 
