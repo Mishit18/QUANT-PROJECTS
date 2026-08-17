@@ -13,6 +13,10 @@ Executes the complete workflow:
 9. Report generation
 """
 
+import argparse
+import subprocess
+import sys
+
 import numpy as np
 import pandas as pd
 import yaml
@@ -506,6 +510,18 @@ def step8_generate_report(hit_rate_df, regime_results, backtest_metrics_ev,
 
 def main():
     """Run complete pipeline."""
+    parser = argparse.ArgumentParser(description="Run the HFT microstructure research pipeline")
+    parser.add_argument(
+        "--data-source",
+        choices=["fi2010", "synthetic"],
+        default="fi2010",
+        help="FI-2010 is the default real-data benchmark; synthetic retains the legacy execution study.",
+    )
+    args = parser.parse_args()
+    if args.data_source == "fi2010":
+        subprocess.run([sys.executable, "scripts/run_fi2010_benchmark.py"], check=True)
+        return
+
     print("\n" + "="*70)
     print("HFT ALPHA RESEARCH PIPELINE")
     print("Production-Grade Limit Order Book Microstructure Analysis")

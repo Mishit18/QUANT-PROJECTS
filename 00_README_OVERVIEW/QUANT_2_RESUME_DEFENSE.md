@@ -14,7 +14,7 @@ This resume should be defended as a quant research and trading portfolio, not as
 
 - Evore Labs: internal research tool prototype for preliminary alpha signal screening, 90 candidate signals, 500 variants, estimated 45% reporting-effort reduction.
 - Market making: Avellaneda-Stoikov/HJB framing, inventory penalty, fill-rate diagnostics, toxic-flow sensitivity, and self-financing PnL attribution.
-- HFT research: order-flow imbalance, queue imbalance, microprice, spread/depth, expected-value filters, transaction costs, slippage, and adverse selection.
+- HFT research: 394,337 real FI-2010 observations, chronological holdout, class imbalance, microprice, queue imbalance, spread/depth, transaction costs, and adverse selection.
 - Options pricing: Heston stochastic volatility, Monte Carlo, PDE limitations, Greeks, implied volatility, volatility surface, and calibration caveats.
 
 ## What To Say If Asked About Bloomberg / Refinitiv / KDB+
@@ -27,7 +27,7 @@ Do not claim paid terminal access unless you actually had it. The defensible fra
 
 - Do not claim live trading, deployed alpha, proprietary asset universes, client PnL, or production execution systems.
 - Do not mention WorldQuant BRAIN in campus resumes because placement guidance disallows it.
-- Do not present synthetic/project data as exchange-colocated or institutional trading data.
+- Describe FI-2010 as real but normalized 2010 academic data; do not present it as current, proprietary, colocated, or institutional data.
 - Do not claim Bloomberg Terminal, Refinitiv Eikon, KDB+, or production HFT stack experience unless directly asked and truly trained.
 
 ## Likely Cross-Checks

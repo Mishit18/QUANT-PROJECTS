@@ -1,19 +1,19 @@
 # HFT Microstructure Alpha Signals
 
-Research-grade limit order book microstructure project showing a central trading lesson: high directional accuracy does not automatically become profitable execution.
+Research-grade limit order book microstructure project built around the real FI-2010 Nasdaq Nordic benchmark, with separate Binance validation and an explicitly isolated synthetic execution stress test.
 
-The project predicts short-horizon price moves from synthetic full-depth LOB data, then tests whether those predictions survive spread costs, queue dynamics, passive fill risk, and adverse selection. Separate Binance benchmarks validate feature definitions on live top-20 order-book snapshots and test trade-flow signals on historical public aggregate trades without conflating either dataset with the synthetic LOB experiment.
+The primary experiment predicts 10-event mid-price direction from 394,337 real ten-level LOB observations across five stocks and ten trading days. Days 1-7 train the model, day 8 is validation, and days 9-10 remain untouched holdout. Separate Binance benchmarks validate current-market feature computation and trade-flow behavior; a legacy synthetic simulator remains only for controlled execution-friction experiments.
 
 ## Executive Snapshot
 
 | Metric | Result |
 |---|---:|
-| Data | Synthetic LOB, 100,000 events |
-| Feature count | 59 microstructure features |
-| Horizons | 1, 5, 10, 20 ticks |
-| Logistic baseline accuracy | 62.5% |
-| XGBoost 5-tick accuracy | 90.8% |
-| 5-tick hit rate | 95.1% |
+| Primary data | FI-2010, 394,337 real LOB observations |
+| Coverage | 5 stocks, 10 trading days, 10 book levels |
+| Input features | 57 raw-book and derived state features |
+| Holdout | Days 9-10, 84,109 observations |
+| Majority balanced accuracy / macro-F1 | 0.333 / 0.272 |
+| Class-balanced XGBoost balanced accuracy / macro-F1 | 0.468 / 0.419 |
 | Market-order PnL | -$58.47 |
 | Limit + confidence filter PnL | -$3.30 |
 | EV-filtered PnL | +$0.41 on 1 trade |
@@ -46,13 +46,14 @@ python scripts/collect_live_binance_lob.py --snapshots 1000
 
 The pipeline runs:
 
-1. Synthetic LOB data generation.
-2. Feature engineering.
-3. Label creation for 1, 5, 10, and 20 tick horizons.
-4. Logistic and XGBoost model training.
-5. Alpha decay and regime analysis.
-6. Event-driven execution tests.
-7. Report and figure generation.
+1. Checksum-verified FI-2010 download and extraction.
+2. Leakage-controlled parsing of 40 ten-level price/volume variables.
+3. Microprice, queue-imbalance, spread, depth, and book-slope features.
+4. Chronological days 1-7/day 8/days 9-10 train-validation-holdout split.
+5. Majority baseline and class-balanced XGBoost comparison.
+6. JSON and Markdown evidence reports with confusion matrices and limitations.
+
+Run `python run_pipeline.py --data-source synthetic` only to reproduce the legacy controlled execution study.
 
 The live collector writes timestamped snapshots and a JSON summary under `reports/`. It is feature-validation evidence only; the predictive backtest remains explicitly synthetic.
 
@@ -62,7 +63,7 @@ Run `python scripts/run_real_binance_benchmark.py` for a chronological 60/20/20 
 
 The latest public-data run collected `1,000` BTCUSDT top-20 snapshots and `276` aggregate-trade messages in `108.64` seconds through Binance's market-data-only WebSocket endpoint. It observed a mean depth imbalance of `0.3723` (standard deviation `0.3360`) and writes the raw snapshot features to `reports/live_binance_lob_snapshots.csv` with the reproducible summary in `reports/live_binance_lob_summary.json`.
 
-This evidence validates parsing and feature computation against a real order book. It does not convert the synthetic predictive experiment into a real-data backtest and is not presented as trading performance.
+This evidence validates current-market parsing and feature computation. FI-2010 is now the primary predictive benchmark; neither experiment is presented as realized trading performance.
 
 ## Project Structure
 
@@ -116,13 +117,14 @@ This evidence validates parsing and feature computation against a real order boo
 
 - Do not claim this is profitable HFT.
 - Do not claim the +$0.41 EV-filtered result is meaningful performance; it is one trade.
-- Do not claim real LOB data.
+- Do not describe FI-2010 as current-market or proprietary data.
 - Do not claim production readiness.
 - Do not claim high accuracy implies tradable edge.
 
 ## Resume Bullets
 
-- Built a 59-feature synthetic LOB microstructure pipeline using OFI, queue imbalance, microprice, spread dynamics, and event-time features; XGBoost reached 90.8% 5-tick directional accuracy versus 62.5% logistic baseline.
+- Built 57 LOB state features on 394,337 real FI-2010 observations spanning five Nasdaq Nordic stocks, ten book levels, and ten trading days.
+- Ran chronological days 1-7/day 8/days 9-10 evaluation; class-balanced XGBoost reached 0.468 holdout balanced accuracy versus 0.333 majority baseline.
 - Added event-driven execution simulation showing market-order PnL -$58.47 and limit-filtered PnL -$3.30, demonstrating that spread costs and adverse selection can erase high predictive accuracy.
 - Implemented EV-based execution filter that rejected 94.6% of candidate signals as uneconomic after costs; final result (+$0.41 on 1 trade) is framed as signal rejection discipline, not profitability.
 

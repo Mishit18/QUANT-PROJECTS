@@ -386,7 +386,7 @@ make -j$(nproc)
 | Factor Modeling PCA | Quality Factor Sharpe | 4.05 |
 | Cointegration Pairs | Regime Filter Rate | 99% |
 | GARCH Volatility | Forecast R² | 0.25-0.35 |
-| HFT Microstructure | Prediction Accuracy | 90.8% |
+| HFT Microstructure | FI-2010 Holdout Balanced Accuracy | 0.468 vs 0.333 baseline |
 | Avellaneda-Stoikov | Monte Carlo Paths | 500+ |
 | Market Impact | Regime Validation | 3 regimes |
 | C++ LOB Engine | Latency (p50) | 250-350ns |

@@ -1,7 +1,17 @@
 # Data configuration for LOB HFT alpha research
 
 data:
-  # Synthetic data generation parameters
+  primary_source: "fi2010"
+  real_data:
+    observations: 394337
+    stocks: 5
+    trading_days: 10
+    levels: 10
+    train_days: 7
+    validation_days: 1
+    holdout_days: 2
+
+  # Legacy synthetic execution-study parameters; run with --data-source synthetic
   n_events: 100000
   initial_price: 100.0
   tick_size: 0.01

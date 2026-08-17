@@ -20,17 +20,18 @@ It should be used as the second Quant Trader anchor after the Avellaneda-Stoikov
 | Modeling | XGBoost, logistic regression baseline, walk-forward validation, alpha decay, feature importance |
 | Execution | event-driven backtesting, market orders, limit orders, EV filter, queue-aware execution |
 | Trading Risk | transaction costs, adverse selection, fill rate, latency, passive fills |
-| Interview Signal | accuracy does not imply profitability, cost-aware signal rejection, synthetic data caveat |
+| Interview Signal | real FI-2010 benchmark, chronological holdout, class imbalance, cost-aware signal rejection |
 
 ## Resume Bullets
 
-- Built a 59-feature synthetic LOB microstructure pipeline using OFI, queue imbalance, microprice, spread dynamics, and event-time features; XGBoost reached 90.8% 5-tick directional accuracy versus 62.5% logistic baseline.
+- Built 57 LOB features on 394,337 real FI-2010 observations across five Nasdaq Nordic stocks, ten levels, and ten trading days.
+- Used a chronological days 1-7/day 8/days 9-10 split; class-balanced XGBoost reached 0.468 holdout balanced accuracy and 0.419 macro-F1.
 - Added event-driven execution tests showing market-order PnL -$58.47 and limit-filtered PnL -$3.30, proving that spread costs and adverse selection can erase high predictive accuracy.
 - Implemented EV-based execution filter rejecting 94.6% of candidate signals as uneconomic after costs; final +$0.41 result came from only 1 trade and is treated as rejection discipline, not a robust profit claim.
 
 ## 30-Second Interview Pitch
 
-I built a synthetic limit order book microstructure project to test whether short-horizon price prediction survives realistic execution. The XGBoost model reached 90.8% 5-tick accuracy, but market orders lost money because crossing the spread consumed the edge. Limit orders helped but still lost money due to low fills and adverse selection. The EV filter rejected 94.6% of signals and left only one trade. The main lesson is that HFT needs execution realism; accuracy alone is not a trading edge.
+I rebuilt the predictive benchmark on 394,337 real FI-2010 ten-level snapshots. A chronological holdout and class-balanced objective improved balanced accuracy from a 0.333 majority baseline to 0.468. I keep the old synthetic simulator only as a controlled execution-friction study because FI-2010 does not contain queue position, fees, or fill outcomes.
 
 ## Interview Defense
 
@@ -38,9 +39,9 @@ I built a synthetic limit order book microstructure project to test whether shor
 
 One trade is not statistical evidence. The value of the EV filter is that it rejected most uneconomic signals after costs, not that it proved profitability.
 
-### Why use synthetic LOB data?
+### Why retain any synthetic LOB data?
 
-Synthetic data makes the project reproducible and shareable. The limitation is that it misses real hidden orders, queue priority, toxic flow, participant behavior, and venue-specific mechanics.
+The synthetic component isolates execution assumptions and is no longer the predictive benchmark. FI-2010 supplies real book states, while the simulator tests controlled spread, fill, and adverse-selection scenarios.
 
 ### What would improve the project?
 
@@ -50,6 +51,6 @@ Use real LOB data, calibrate fill probabilities, model latency and queue priorit
 
 - Do not call this profitable HFT.
 - Do not say the model is production-ready.
-- Do not claim real exchange data.
+- Do not imply FI-2010 is modern, proprietary, or sufficient for live execution claims.
 - Do not overstate the +$0.41 result.
 - Do not say 90.8% accuracy is enough to trade.

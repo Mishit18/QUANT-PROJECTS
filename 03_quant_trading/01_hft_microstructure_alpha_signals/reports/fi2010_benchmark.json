@@ -1,0 +1,85 @@
+{
+  "dataset": "FI-2010 Nasdaq Nordic limit order book benchmark",
+  "archive_sha256": "7a5564290a504bdc104dccaf44aa6c0b3857bf1db6b0517b9b88577c2def3e5f",
+  "data_provenance": "Real Nasdaq Nordic data; decimal-precision normalized by dataset authors",
+  "stocks": 5,
+  "trading_days": 10,
+  "book_levels": 10,
+  "total_observations": 394337,
+  "input_features": 57,
+  "label_horizon_events": 10,
+  "split": {
+    "train_days_1_7": 254750,
+    "validation_day_8": 55478,
+    "holdout_days_9_10": 84109
+  },
+  "dummy_holdout": {
+    "observations": 84109,
+    "accuracy": 0.6897953845605108,
+    "balanced_accuracy": 0.3333333333333333,
+    "macro_f1": 0.2721415822937701,
+    "confusion_matrix": [
+      [
+        0,
+        13360,
+        0
+      ],
+      [
+        0,
+        58018,
+        0
+      ],
+      [
+        0,
+        12731,
+        0
+      ]
+    ]
+  },
+  "xgboost_validation": {
+    "observations": 55478,
+    "accuracy": 0.5185298676953026,
+    "balanced_accuracy": 0.48024045232556034,
+    "macro_f1": 0.421577076430274,
+    "confusion_matrix": [
+      [
+        3056,
+        2481,
+        2270
+      ],
+      [
+        7546,
+        22159,
+        10915
+      ],
+      [
+        1468,
+        2031,
+        3552
+      ]
+    ]
+  },
+  "xgboost_holdout": {
+    "observations": 84109,
+    "accuracy": 0.4885089586132281,
+    "balanced_accuracy": 0.4684388017220378,
+    "macro_f1": 0.41912457896221333,
+    "confusion_matrix": [
+      [
+        5670,
+        3859,
+        3831
+      ],
+      [
+        14132,
+        29376,
+        14510
+      ],
+      [
+        3304,
+        3385,
+        6042
+      ]
+    ]
+  }
+}
