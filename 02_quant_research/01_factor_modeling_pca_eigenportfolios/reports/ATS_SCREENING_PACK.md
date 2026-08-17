@@ -22,6 +22,9 @@
 - Produced research-ready CSV, JSON, and PNG artifacts including eigen-portfolio
   weights, factor loadings, PCA variance explained, factor alphas/betas,
   residual diagnostics, regime statistics, and risk metrics.
+- Added bootstrap Sharpe confidence intervals, eigenportfolio concentration
+  checks, and factor decision gates to separate "research further" candidates
+  from non-deployable in-sample results.
 - Demonstrated honest quant research interpretation: PCA factors achieved 67.0%
   mean regression R-squared but did not guarantee positive premia, while the
   quality factor produced the strongest in-sample Sharpe in the classical set.

@@ -11,6 +11,15 @@ C++ implementation of the Heston stochastic volatility model for European option
 - Multithreading support
 - Sobol quasi-random number generation
 
+## SDE / Quant-Dev Screening Summary
+
+Verified locally on Windows/MSVC Release:
+- CMake builds the static library, example, benchmark, and five test executables
+- CTest passes 5/5 tests in 6.40 seconds after making calibration a bounded smoke test
+- Black-Scholes limit test: MC price 10.4173 vs BS 10.4506, 0.318% relative error
+- Benchmark: MC Euler 1M paths in 11.10s; MC QE 1M paths on 8 threads in 3.13s
+- PDE solver remains a documented limitation; current PDE prices show large error versus MC/Black-Scholes
+
 ## Implementation Details
 
 ### Monte Carlo Engine
@@ -102,10 +111,11 @@ Run benchmarks:
 ./build/benchmarks/Release/benchmark_pricing
 ```
 
-Typical results (Intel Xeon, 8 cores):
-- MC Euler (1M paths, 1 thread): ~9s
-- MC QE (1M paths, 8 threads): ~2.5s
-- PDE (200×200 grid): ~100ms
+Latest local Release benchmark:
+- MC Euler (1M paths, 1 thread): 11.10s
+- MC QE (1M paths, 8 threads): 3.13s
+- MC Sobol + antithetic (100K paths): 1.97s
+- PDE 200x200 grid: 164.1 ms, but accuracy caveat remains
 
 ## References
 

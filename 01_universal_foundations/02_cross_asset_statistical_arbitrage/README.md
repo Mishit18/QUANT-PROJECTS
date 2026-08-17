@@ -8,6 +8,14 @@ Test whether volatility-scaled forward returns produce a better-conditioned cros
 
 This is a research framework, not a live trading strategy. Current results use synthetic data only.
 
+## Tech Resume Screening Summary
+
+Verified locally:
+- Pytest suite passes 5/5 tests covering targets, deploy gates, and backtest mechanics.
+- Framework includes point-in-time volatility-scaled targets, embargoed walk-forward validation, OLS/Ridge/XGBoost models, IC/IC-IR diagnostics, market/sector neutralization, transaction-cost gates, and deploy/reject reporting.
+- The final decision rejects deployment: XGBoost mean IC is 0.0051, IC-IR is 0.05, and neutralized net return falls to -8.24% after 51.68% cost drag.
+- This is valuable for a Tech/SWE resume because it shows ML validation discipline, leakage control, reproducible testing, and honest model governance.
+
 ## Current Verdict
 
 **Signal status: rejected for deployment.**
