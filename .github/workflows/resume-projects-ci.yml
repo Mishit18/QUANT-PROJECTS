@@ -20,8 +20,8 @@ jobs:
       run:
         working-directory: 03_quant_trading/01_hft_microstructure_alpha_signals
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -36,8 +36,8 @@ jobs:
       run:
         working-directory: 03_quant_trading/06_optimal_execution_reinforcement_learning
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
