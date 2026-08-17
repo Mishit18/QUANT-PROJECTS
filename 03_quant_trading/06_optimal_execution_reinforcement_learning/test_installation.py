@@ -35,10 +35,9 @@ def test_imports():
         from models.vwap import VWAP  # noqa: F401
 
         ok("All imports successful")
-        return True
     except ImportError as exc:
         fail(f"Import failed: {exc}")
-        return False
+        raise AssertionError("required project imports failed") from exc
 
 
 def test_almgren_chriss():
@@ -67,10 +66,9 @@ def test_almgren_chriss():
         assert variance > 0, "Variance should be positive"
 
         ok(f"AC test passed (cost={cost:.2f}, var={variance:.2f})")
-        return True
     except Exception as exc:
         fail(f"AC test failed: {exc}")
-        return False
+        raise
 
 
 def test_environment():
@@ -102,10 +100,9 @@ def test_environment():
         assert "total_cost" in info, "Missing total_cost in info"
 
         ok("Environment test passed")
-        return True
     except Exception as exc:
         fail(f"Environment test failed: {exc}")
-        return False
+        raise
 
 
 def test_twap():
@@ -133,10 +130,9 @@ def test_twap():
         assert summary["completion_rate"] > 0.90, "TWAP did not complete execution"
 
         ok(f"TWAP test passed (completion={summary['completion_rate']:.2%})")
-        return True
     except Exception as exc:
         fail(f"TWAP test failed: {exc}")
-        return False
+        raise
 
 
 def test_rl_models():
@@ -158,10 +154,9 @@ def test_rl_models():
         assert td3_action.shape == (1,), "Wrong TD3+BC action shape"
 
         ok("RL models test passed")
-        return True
     except Exception as exc:
         fail(f"RL models test failed: {exc}")
-        return False
+        raise
 
 
 def test_replay_buffer():
@@ -187,10 +182,9 @@ def test_replay_buffer():
         assert len(batch) == 5, "Wrong batch structure"
 
         ok("Replay buffer test passed")
-        return True
     except Exception as exc:
         fail(f"Replay buffer test failed: {exc}")
-        return False
+        raise
 
 
 def main():
@@ -208,7 +202,13 @@ def main():
         test_replay_buffer,
     ]
 
-    results = [test() for test in tests]
+    results = []
+    for test in tests:
+        try:
+            test()
+            results.append(True)
+        except Exception:
+            results.append(False)
 
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
