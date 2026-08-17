@@ -1,0 +1,47 @@
+name: Quant resume project evidence
+
+on:
+  push:
+    paths:
+      - "03_quant_trading/01_hft_microstructure_alpha_signals/**"
+      - "03_quant_trading/06_optimal_execution_reinforcement_learning/**"
+      - ".github/workflows/resume-projects-ci.yml"
+  pull_request:
+    paths:
+      - "03_quant_trading/01_hft_microstructure_alpha_signals/**"
+      - "03_quant_trading/06_optimal_execution_reinforcement_learning/**"
+      - ".github/workflows/resume-projects-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  hft-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 03_quant_trading/01_hft_microstructure_alpha_signals
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: 03_quant_trading/01_hft_microstructure_alpha_signals/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+
+  execution-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 03_quant_trading/06_optimal_execution_reinforcement_learning
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: 03_quant_trading/06_optimal_execution_reinforcement_learning/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
