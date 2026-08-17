@@ -1,6 +1,8 @@
 #include "numerics/random.hpp"
 #include <cmath>
 #include <algorithm>
+#include <limits>
+#include <stdexcept>
 
 namespace heston {
 
@@ -75,9 +77,12 @@ std::unique_ptr<RandomNumberGenerator> SobolRNG::clone() const {
 
 void SobolRNG::generate_next_point() {
     ++index_;
+    if (index_ > static_cast<size_t>(std::numeric_limits<uint32_t>::max())) {
+        throw std::overflow_error("SobolRNG exhausted its 32-bit sequence");
+    }
     
     uint32_t c = 0;
-    uint32_t value = index_ - 1;
+    uint32_t value = static_cast<uint32_t>(index_ - 1);
     while (value & 1) {
         value >>= 1;
         ++c;
