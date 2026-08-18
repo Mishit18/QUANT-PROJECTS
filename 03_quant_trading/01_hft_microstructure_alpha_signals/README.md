@@ -121,6 +121,16 @@ This evidence validates current-market parsing and feature computation. FI-2010 
 - Do not claim production readiness.
 - Do not claim high accuracy implies tradable edge.
 
+## Forward Shadow Study
+
+Capture chronological public Binance snapshots and write a SHA-256 hash-chained paper ledger:
+
+```bash
+python scripts/run_forward_paper_study.py --snapshots 1000 --output-dir forward_runs/run_YYYYMMDD
+```
+
+The ledger records signal and mark timestamps, paper position, turnover, exposure, gross return, modeled cost, net return, and the previous-record hash. The committed 200-snapshot run from 18 August 2026 is a connectivity and integrity smoke test only. It is not statistical evidence and is not used as a resume performance claim. A defensible forward study requires a frozen configuration and at least 20 trading days without retrospective signal edits.
+
 ## Resume Bullets
 
 - Built 57 LOB state features on 394,337 real FI-2010 observations spanning five Nasdaq Nordic stocks, ten book levels, and ten trading days.

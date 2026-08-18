@@ -1,0 +1,16 @@
+{
+  "records": 199,
+  "signals_active": 199,
+  "turnover_units": 1.0,
+  "mean_absolute_exposure": 1.0,
+  "gross_return": 0.0003413186030973847,
+  "transaction_cost": 0.0001,
+  "net_return": 0.00024131860309738472,
+  "cost_bps_per_turnover": 1.0,
+  "final_record_hash": "7a775eaed8280a329a35db52cd2ac531e429e512169b4511a38d2b346d9f2bd8",
+  "study_type": "forward-captured public data with shadow paper positions",
+  "execution_boundary": "no orders submitted; midpoint marks and modeled costs only",
+  "ledger_verified": true,
+  "snapshots_file": "live_snapshots.csv",
+  "ledger_file": "paper_ledger.jsonl"
+}
